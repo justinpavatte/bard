@@ -1,9 +1,12 @@
 {
     "short_name": "Gemini",
     "name": "Google Gemini",
+    "display_comment": "fullscreen, standalone, minimal-ui, browser",
     "display": "standalone",
-    "theme_color": "#0000FF",
-    "background_color": "#00FF00",
+    "theme_color_comment": "On Android, theme_color changes the background for the top bar from phone and the title bar with url.",
+    "theme_color": "#131314",
+    "background_color_comment": "On Android, background_color changes the background for the splash screen.",
+    "background_color": "#ffffff",
     "icons": [
       {
         "src": "favicon/android-chrome-192x192.png",
