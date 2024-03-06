@@ -1,9 +1,9 @@
 {
     "short_name": "Gemini",
     "name": "Google Gemini",
-    "display": "fullscreen",
-    "theme_color": "#131314",
-    "background_color": "#131314",
+    "display": "standalone",
+    "theme_color": "#0000FF",
+    "background_color": "#00FF00",
     "icons": [
       {
         "src": "favicon/android-chrome-192x192.png",
