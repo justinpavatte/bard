@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMC</title>
+    <!-- https://favicon.io/favicon-converter/ -->
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+    <div><a href="goldscrap.html">Gold Scrap</a></div>
+    <div><a href="goldbullion.html">Gold Bullion</a></div>
+    <div><a href="silverscrap.html">Silver Scrap</a></div>
+    <div><a href="silverbullion.html">Silver Bullion</a></div>
+    <input id="bob" />
+    <script src="metalprices.js"></script>
+    <script>
+        async function updateGoldPrice() {
+            const bobInput = document.getElementById("bob");
+            bobInput.value = await fetchBidPrice("gold");
+        }
+        window.onload = updateGoldPrice;
+    </script>
+</body>
+</html>
