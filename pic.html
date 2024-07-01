@@ -14,21 +14,25 @@
         <img src="me.png" style="width: 350px">     
     </div>
     <div>
-        <input id="comment" autofocus style="width: 340px; margin-top: 2px; margin-bottom: 5px;"/>
+        <input id="comment" placeholder="Please leave a comment..." autofocus style="width: 340px; margin-top: 2px; margin-bottom: 5px;"/>
     </div>
-    <div>        
-        <button onclick="addComment()" >Add Comment</button>
+    <div>
+        <input id="urname" placeholder="and your first name..." autofocus style="width: 150px; margin-top: 2px; margin-bottom: 5px;"/>
+    </div>
+    <div>
+        <button onclick="addComment()" >Submit</button>
     </div>
     <script src="todoist.js"></script>
     <script>
         writeToLog("me.png viewed");
         async function addComment() {
-          let c = document.getElementById('comment').value;
+          let c = document.getElementById('comment').value + " -" + document.getElementById('urname').value;
           document.getElementById('comment').value = "";
+          document.getElementById('urname').value = "";
           writeToLog(c);
         }
         //make enter the accept button
-        document.getElementById('comment').onkeydown = function (event) {
+        document.getElementById('urname').onkeydown = function (event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 addComment();
