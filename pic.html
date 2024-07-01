@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Me</title>
+    <meta property="og:title" content="My Picture" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://justinpavatte.github.io/bard/pic.html" />
+    <meta property="og:description" content="Please click here to view my pic." />
+</head>
+<body>
+    <div>
+        <img src="me.png" style="width: 350px">     
+    </div>
+    <div>
+        <input id="comment" autofocus style="width: 340px; margin-top: 2px; margin-bottom: 5px;"/>
+    </div>
+    <div>        
+        <button onclick="addComment()" >Add Comment</button>
+    </div>
+    <script src="todoist.js"></script>
+    <script>
+        writeToLog("me.png viewed");
+        async function addComment() {
+          let c = document.getElementById('comment').value;
+          document.getElementById('comment').value = "";
+          writeToLog(c);
+        }
+        //make enter the accept button
+        document.getElementById('comment').onkeydown = function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addComment();
+            }
+        };
+    </script>
+</body>
+</html>
