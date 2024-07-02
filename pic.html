@@ -21,16 +21,32 @@
         <input id="urname" placeholder="and your first name..." autofocus style="width: 150px; margin-top: 2px; margin-bottom: 5px;"/>
     </div>
     <div>
-        <button onclick="addComment()" >Submit</button>
+        <button id="btn" onclick="addComment()" >Submit</button>
     </div>
+    <div><p id="thnks"></p></div>
+    <div><p id="cmtval" style="display: none;">Please don't forget to leave me a comment that is at least 5 letters.</p></div>
+    <div><p id="nmeval" style="display: none;">Please don't forget to leave your first name that is at least 3 letters.</p></div>
     <script src="todoist.js"></script>
     <script>
         writeToLog("me.png viewed");
         async function addComment() {
-          let c = document.getElementById('comment').value + " -" + document.getElementById('urname').value;
-          document.getElementById('comment').value = "";
-          document.getElementById('urname').value = "";
-          writeToLog(c);
+            if (document.getElementById('comment').value.length < 5)
+            {
+                document.getElementById('cmtval').style.display = 'inline';
+            }
+            else if (document.getElementById('urname').value.length < 3)
+            {
+                document.getElementById('nmeval').style.display = 'inline';
+            }
+            else
+            {
+                let c = document.getElementById('comment').value + " -" + document.getElementById('urname').value;
+                document.getElementById('comment').style.display = 'none';
+                document.getElementById('urname').style.display = 'none';
+                document.getElementById('btn').style.display = 'none';
+                document.getElementById('thnks').innerText = "Thanks " + document.getElementById('urname').value + "!";
+                writeToLog(c);
+            }
         }
         //make enter the accept button
         document.getElementById('urname').onkeydown = function (event) {
