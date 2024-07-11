@@ -24,7 +24,12 @@
     <div>
         <button id="btn" onclick="addComment()" >Submit</button>
     </div>
-    <div><p id="thnks"></p></div>
+    <div>
+        <p id="thnks" style="display: none;">Thanks <span id="thnksnme"></span>! If your <b id="thnksdv"></b> can support video or audio calls, 
+        give me a call with Facebook Messenger. I am not giving out my phone number, email, Whatsapp, Telegram, 
+        etc to some random person in the <b id="thnksloc"></b> area until you verify who you are. 
+        Thanks so much for keeping Facebook a scam-free community.</p>
+    </div>
     <div><p id="cmtval" style="display: none;">Please don't forget to leave me a comment that is at least 5 letters.</p></div>
     <div><p id="nmeval" style="display: none;">Please don't forget to leave your first name that is at least 3 letters.</p></div>
     <script src="todoist.js"></script>
@@ -75,11 +80,10 @@
                 {
                     deviceType = "Android Phone";
                 }
-                document.getElementById('thnks').innerText = "Thanks " + document.getElementById('urname').value + "! " +
-                  "If your " + deviceType + " can support video or audio calls, give me a call with Facebook Messenger. " +
-                  "I am not giving out my phone number, email, Whatsapp, Telegram, etc to some random person in the " +
-                  Intl.DateTimeFormat().resolvedOptions().timeZone + " area until you verify who you are. " +
-                  "Thanks so much for keeping Facebook a scam-free community.";
+                document.getElementById('thnksnme').innerText = document.getElementById('urname').value;
+                document.getElementById('thnksdv').innerText = deviceType;
+                document.getElementById('thnksloc').innerText = Intl.DateTimeFormat().resolvedOptions().timeZone;                
+                document.getElementById('thnks').style.display = 'inline';
                 writeToLog(c);
             }
         }
