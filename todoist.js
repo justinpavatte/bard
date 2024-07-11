@@ -2,7 +2,7 @@ async function writeToLog(message) {
     let apiUrl =  "https://api.todoist.com/rest/v2/comments";
     //Public Todoist account. Google Curtis.
     let apiToken = "8972a19cadcc698cf4843761485fd359165c061b";
-    let taskId = "8195447550";
+    let taskId = "8196116847";
 
     let environmentString = `
 Platform: ${navigator.userAgentData.platform}
