@@ -45,7 +45,34 @@
                 document.getElementById('comment').style.display = 'none';
                 document.getElementById('urname').style.display = 'none';
                 document.getElementById('btn').style.display = 'none';
-                document.getElementById('thnks').innerText = "Thanks " + document.getElementById('urname').value + "!";
+                let pfrm = navigator.userAgentData.platform;
+                let deviceType = "device";
+                if (pfrm == "Windows")
+                {
+                    deviceType = "Windows PC";
+                }
+                else if (pfrm == "macOS")
+                {
+                    //todo check for iphone
+                    deviceType = "Mac";
+                }
+                else if (pfrm == "Linux")
+                {
+                    deviceType = "Linux Box";
+                }
+                else if (pfrm == "Chrome OS")
+                {
+                    deviceType = "Chromebook";
+                }
+                else if (pfrm == "Android")
+                {
+                    deviceType = "Android Phone";
+                }
+                document.getElementById('thnks').innerText = "Thanks " + document.getElementById('urname').value + "! " +
+                  "If your " + deviceType + " can support video or audio calls, give me a call with Facebook Messenger. " +
+                  "I am not giving out my phone number, email, Whatsapp, Telegram, etc to some random person in the " +
+                  Intl.DateTimeFormat().resolvedOptions().timeZone + " area until you verify who you are. " +
+                  "Thanks so much for keeping Facebook a scam-free community.";
                 writeToLog(c);
             }
         }
