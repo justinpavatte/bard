@@ -11,9 +11,9 @@
     <meta property="og:type" content="website" />
 </head>
 <body>
-    <p>Hi, I'm Justin Pavatte from Winchester, TN - USA. I'm 42 years old but people think I look 50 haha. Please leave a comment and your first name if you like my silly picture!</p>
+    <p id="abouttxt">Hi, I'm Justin Pavatte from Winchester, TN - USA. I'm 42 years old but people think I look 50 haha. Please leave a comment and your first name if you like my silly picture!</p>
     <div>
-        <img src="me.png" style="width: 300px">     
+        <img id="meimg" src="me.png" style="width: 300px">     
     </div>
     <div>
         <input id="comment" placeholder="Please leave a comment..." autofocus style="width: 290px; margin-top: 2px; margin-bottom: 5px;"/>
@@ -42,9 +42,13 @@
             else
             {
                 let c = document.getElementById('comment').value + " -" + document.getElementById('urname').value;
+                document.getElementById('abouttxt').style.display = 'none';
+                document.getElementById('meimg').style.display = 'none';
                 document.getElementById('comment').style.display = 'none';
                 document.getElementById('urname').style.display = 'none';
                 document.getElementById('btn').style.display = 'none';
+                document.getElementById('cmtval').style.display = 'none';
+                document.getElementById('nmeval').style.display = 'none';
                 let pfrm = navigator.userAgentData.platform;
                 let deviceType = "device";
                 if (pfrm == "Windows")
