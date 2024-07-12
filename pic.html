@@ -27,7 +27,7 @@
     <div>
         <p id="thnks" style="display: none;">Thanks <span id="thnksnme"></span>! If your <b id="thnksdv"></b> can support video or audio calls, 
         give me a call with Facebook Messenger. I am not giving out my phone number, email, Whatsapp, Telegram, 
-        etc to some random person in the <b id="thnksloc"></b> area until you verify who you are. 
+        etc to some random person until you verify who you are. 
         Thanks so much for keeping Facebook a scam-free community.</p>
     </div>
     <div><p id="cmtval" style="display: none;">Please don't forget to leave me a comment that is at least 3 letters.</p></div>
@@ -71,7 +71,7 @@
 
                 document.getElementById('thnksnme').innerText = document.getElementById('urname').value;
                 document.getElementById('thnksdv').innerText = device;
-                document.getElementById('thnksloc').innerText = Intl.DateTimeFormat().resolvedOptions().timeZone;                
+                //document.getElementById('thnksloc').innerText = Intl.DateTimeFormat().resolvedOptions().timeZone;                
                 document.getElementById('thnks').style.display = 'inline';
                 writeToLog(c);
             }
