@@ -4,16 +4,18 @@ async function writeToLog(message) {
     let apiToken = "8972a19cadcc698cf4843761485fd359165c061b";
     let taskId = "8196116847";
 
+    //Apple is always doing something weird so for our purposes
+    //just default to iPhone if none of these others match
+    let device = "iPhone";
     let agent = window.navigator.userAgent.toLowerCase();
-    let device = agent;
     if (agent.includes("windows")) {
-      device = "Windows";
+        device = "Windows Machine";
     } else if (agent.includes("android")) {
-      device = "Android";
+        device = "Android Phone";
     } else if (agent.includes("cros")) {
-      device = "Chrome OS";
+        device = "Chromebook";
     } else if (agent.includes("linux")) {
-      device = "Linux";
+        device = "Linux Device";
     }
 
     let environmentString = `
