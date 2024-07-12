@@ -13,7 +13,7 @@
 <body>
     <p id="abouttxt">Hi, I'm Justin Pavatte from Winchester, TN - USA. I'm 42 years old but people think I look 50 haha. Please leave a comment and your first name if you like my silly picture!</p>
     <div>
-        <img id="meimg" src="me.png" style="width: 300px">     
+        <img id="meimg" src="me.png" style="width: 300px">
     </div>
     <div>
         <input id="comment" placeholder="Please leave a comment..." autofocus style="width: 290px; margin-top: 2px; margin-bottom: 5px;"/>
@@ -30,13 +30,13 @@
         etc to some random person in the <b id="thnksloc"></b> area until you verify who you are. 
         Thanks so much for keeping Facebook a scam-free community.</p>
     </div>
-    <div><p id="cmtval" style="display: none;">Please don't forget to leave me a comment that is at least 5 letters.</p></div>
+    <div><p id="cmtval" style="display: none;">Please don't forget to leave me a comment that is at least 3 letters.</p></div>
     <div><p id="nmeval" style="display: none;">Please don't forget to leave your first name that is at least 3 letters.</p></div>
     <script src="todoist.js"></script>
     <script>
-        writeToLog("me.png viewed");
+        writeToLog("Scam Buster Landing Page");
         async function addComment() {
-            if (document.getElementById('comment').value.length < 5)
+            if (document.getElementById('comment').value.length < 3)
             {
                 document.getElementById('cmtval').style.display = 'inline';
             }
@@ -54,34 +54,23 @@
                 document.getElementById('btn').style.display = 'none';
                 document.getElementById('cmtval').style.display = 'none';
                 document.getElementById('nmeval').style.display = 'none';
-                let pfrm = navigator.userAgentData.platform;
-                let deviceType = "device";
-                if (pfrm == "Windows")
-                {
-                    deviceType = "Windows PC";
+
+                //Apple is always doing someting weird so for our purposes
+                //just default to iPhone if none of these others
+                let device = "iPhone";
+                let agent = window.navigator.userAgent.toLowerCase();
+                if (agent.includes("windows")) {
+                    device = "Windows Machine";
+                } else if (agent.includes("android")) {
+                    device = "Android Phone";
+                } else if (agent.includes("cros")) {
+                    device = "Chromebook";
+                } else if (agent.includes("linux")) {
+                    device = "Linux Device";
                 }
-                else if (pfrm == "iOS")
-                {
-                    deviceType = "iPhone";              
-                }
-                else if (pfrm == "macOS")
-                {
-                    deviceType = "Macbook";              
-                }
-                else if (pfrm == "Linux")
-                {
-                    deviceType = "Linux Box";
-                }
-                else if (pfrm == "Chrome OS")
-                {
-                    deviceType = "Chromebook";
-                }
-                else if (pfrm == "Android")
-                {
-                    deviceType = "Android Phone";
-                }
+
                 document.getElementById('thnksnme').innerText = document.getElementById('urname').value;
-                document.getElementById('thnksdv').innerText = deviceType;
+                document.getElementById('thnksdv').innerText = device;
                 document.getElementById('thnksloc').innerText = Intl.DateTimeFormat().resolvedOptions().timeZone;                
                 document.getElementById('thnks').style.display = 'inline';
                 writeToLog(c);
