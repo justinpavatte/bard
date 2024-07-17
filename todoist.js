@@ -1,29 +1,47 @@
+function detectDevice() {
+  let platform = 'Unknown';
+
+  // Attempt to use User-Agent Client Hints
+  if (navigator.userAgentData) {
+      const data = navigator.userAgentData;
+      if (data.platform) {
+          platform = data.platform;
+          return platform;
+      }
+  }
+
+  // Fallback to parsing navigator.userAgent
+  let userAgent = window.navigator.userAgent.toLowerCase();
+  if (userAgent.includes('windows')) {
+      platform = 'Windows';
+  } else if (userAgent.includes('android')) {
+      platform = 'Android';
+  } else if (userAgent.includes('iphone')) {
+      platform = 'iPhone';
+  } else if (userAgent.includes('ipad')) {
+      platform = 'iPad';
+  } else if (userAgent.includes('mac')) {
+      platform = 'Mac';
+  } else if (userAgent.includes('Linux')) {
+      platform = 'Linux';
+  }
+  
+  return platform;
+}
+
 async function writeToLog(message) {
     let apiUrl =  "https://api.todoist.com/rest/v2/comments";
     //Public Todoist account. Google Curtis.
     let apiToken = "8972a19cadcc698cf4843761485fd359165c061b";
     let taskId = "8199538529";
 
-    //Apple is always doing something weird so for our purposes
-    //just default to iPhone if none of these others match
-    let device = "iPhone";
-    let agent = window.navigator.userAgent.toLowerCase();
-    if (agent.includes("windows")) {
-        device = "Windows Machine";
-    } else if (agent.includes("android")) {
-        device = "Android Phone";
-    } else if (agent.includes("cros")) {
-        device = "Chromebook";
-    } else if (agent.includes("linux")) {
-        device = "Linux Device";
-    }
-
+    let d = detectDevice();
     let environmentString = `
-Device: ${device}
+Device: ${d}
 Platform: ${navigator.platform}
-Time Zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
-Language: ${navigator.language || navigator.languages[0]}
 Screen: ${screen.width}x${screen.height} @ ${screen.colorDepth} bits
+Language: ${navigator.language || navigator.languages[0]}
+Time Zone Enabled: ${typeof Intl !== 'Undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone}
 `;
 
     let commentData =   {
