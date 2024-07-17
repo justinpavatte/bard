@@ -20,6 +20,7 @@ async function writeToLog(message) {
 
     let environmentString = `
 Device: ${device}
+Platform: ${navigator.platform}
 Time Zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
 Language: ${navigator.language || navigator.languages[0]}
 Screen: ${screen.width}x${screen.height} @ ${screen.colorDepth} bits
