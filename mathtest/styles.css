@@ -17,13 +17,12 @@ a {
     font-size: 30px;
     margin: 5px;
     display: inline-block;
-    color: #c14444;
+    color: #73A94B;
 }
  
 label {
-    color: #c14444;
-    font-size: 25px;
-    margin: 5px;
+    font-size: 20px;
+    margin: 200px 50px 50px 50px;
 }
 
 input {
@@ -33,7 +32,6 @@ input {
     font-size: 25px;
     margin: 5px;
     border-radius: 5px;
-    max-width: 400px;
     width: 95%;
 }
 
@@ -44,7 +42,6 @@ textarea {
     font-size: 25px;
     margin: 5px;
     border-radius: 5px;
-    max-width: 400px;
     width: 95%;
 }
 
@@ -59,7 +56,7 @@ button {
 }
 
 .container {
-    max-width: 400px;
+    max-width: 800px;
     width: 100%;
     margin-left: auto;
     margin-right: auto;
