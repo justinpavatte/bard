@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Token URL Generator</title>
+</head>
+<body>
+    <label>
+        First Name:
+        <input type="text" id="firstName">
+    </label><br>
+    <label>
+        Last Name:
+        <input type="text" id="lastName">
+    </label><br><br>
+
+    <button id="generateBtn">Generate URL</button>
+    <p id="result"></p>
+    <p id="status" style="color: red;"></p>
+    <button id="copyBtn" style="display: none;">Copy to Clipboard</button>
+
+    <script src="todoistHelper.js"></script>
+    <script>
+        let currentUrl = '';
+        const SECTION_ID = '6XvCGwGwxx8QPRr6';
+
+        const resultEl = document.getElementById('result');
+        const statusEl = document.getElementById('status');
+
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+
+            resultEl.textContent = '';
+            document.getElementById('copyBtn').style.display = 'none';
+            statusEl.style.color = 'red';
+            statusEl.textContent = '';
+
+            if (!firstName || !lastName) {
+                statusEl.textContent = 'Please enter both first and last name.';
+                return;
+            }
+
+            const encodedFirst = encodeURIComponent(firstName);
+            const encodedLast = encodeURIComponent(lastName);
+            const taskName = `${firstName} ${lastName}`;
+
+            try {
+                const taskId = await TodoistHelper.createTaskInSection(SECTION_ID, taskName);
+
+                const basePath = window.location.href.replace(/\/[^\/]*$/, '/');
+                currentUrl = `${basePath}index.html?first=${encodedFirst}&last=${encodedLast}&token=${taskId}`;
+
+                resultEl.textContent = currentUrl;
+                document.getElementById('copyBtn').style.display = 'inline';
+                statusEl.textContent = '';
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = 'Failed to save token.';
+            }
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            if (currentUrl) {
+                navigator.clipboard.writeText(currentUrl)
+                    .then(() => {
+                        statusEl.style.color = 'green';
+                        statusEl.textContent = 'URL copied to clipboard.';
+                    })
+                    .catch(err => {
+                        console.error('Clipboard error:', err);
+                        statusEl.style.color = 'red';
+                        statusEl.textContent = 'Failed to copy URL.';
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

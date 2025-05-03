@@ -1,4 +1,0 @@
-const BRACKET_INTERVAL = 1600.0;
-const BASE_STATE_TAX = .07;
-const LOCAL_TAX = .0225;
-const EXTRA_STATE_TAX = .0275;

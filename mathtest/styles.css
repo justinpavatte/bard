@@ -6,43 +6,37 @@ body {
 h1 {
     margin: 10px;
     margin-top: 15px;
+    font-size: 40px;
     text-align: center;
+    color: #679345; 
 }
-
-span {
-    margin: 10px;
-}
-
-a {
-    font-size: 30px;
-    margin: 5px;
-    display: inline-block;
-    color: #73A94B;
-}
- 
-label {
+  
+label {    
+    color: #E3E3E3; 
     font-size: 20px;
-    margin: 200px 50px 50px 50px;
+    display: inline-block;
+}
+
+label.wrap-label {
+    color: #87aacd;
+    width: auto;
+    font-size: 20px;
+    display: block;
 }
 
 input {
     color: #E3E3E3;
     background-color: #1E1F20;
     border-color: #8d8f91;
-    font-size: 25px;
+    font-size: 22px;
     margin: 5px;
     border-radius: 5px;
     width: 95%;
 }
 
-textarea {
-    color: #E3E3E3;
-    background-color: #1E1F20;
-    border-color: #8d8f91;
-    font-size: 25px;
-    margin: 5px;
-    border-radius: 5px;
-    width: 95%;
+input.small-input {
+    width: 150px; 
+    margin: 1px;
 }
 
 button {
@@ -60,4 +54,8 @@ button {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
+}
+
+p {
+    font-size: 20px;
 }
