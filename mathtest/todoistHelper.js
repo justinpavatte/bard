@@ -1,13 +1,13 @@
 const TodoistHelper = (() => {
     const BASE_URL = 'https://api.todoist.com/rest/v2';
-    const TOKEN = '8972a19cadcc698cf4843761485fd359165c061b';
+    const PUBLIC_TOKEN = '8972a19cadcc698cf4843761485fd359165c061b';
     const PROJECT_ID = '6Xv92Wq4wCmhqP86';
 
     async function request(endpoint, method, body) {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
             method,
             headers: {
-                'Authorization': `Bearer ${TOKEN}`,
+                'Authorization': `Bearer ${PUBLIC_TOKEN}`,
                 'Content-Type': 'application/json'
             },
             body: body ? JSON.stringify(body) : undefined

@@ -1,6 +1,6 @@
 body {
     background-color: #131314;    
-    color: #E3E3E3; 
+    color: #bebebe; 
 }
 
 h1 {
@@ -8,24 +8,24 @@ h1 {
     margin-top: 15px;
     font-size: 40px;
     text-align: center;
-    color: #679345; 
+    color: #588075; 
 }
   
 label {    
-    color: #E3E3E3; 
+    color: #777a5a; 
     font-size: 20px;
     display: inline-block;
 }
 
 label.wrap-label {
-    color: #87aacd;
+    color: #78719b;
     width: auto;
     font-size: 20px;
     display: block;
 }
 
 input {
-    color: #E3E3E3;
+    color: #bebebe;
     background-color: #1E1F20;
     border-color: #8d8f91;
     font-size: 22px;
