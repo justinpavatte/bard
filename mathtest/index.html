@@ -154,6 +154,7 @@
     
             let timeRemaining = 15 * 60;
             let timerInterval;
+            let submitted = false;
 
             function updateTimerDisplay() {
                 const minutes = Math.floor(timeRemaining / 60);
@@ -200,7 +201,12 @@
                 const roundedCorrectValue = Math.round(correctVal * 100) / 100;
 
                 return roundedUserValue === roundedCorrectValue;
-            }function submitTest() {
+            }
+            
+            function submitTest() {
+                if (submitted) return;
+                submitted = true;
+                submitButton.disabled = true;
                 document.getElementById('intro').style.display = 'none';
 
                 const totalQuestions = Object.keys(correctAnswers).length - 1; // exclude bonus
