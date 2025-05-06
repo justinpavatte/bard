@@ -111,7 +111,7 @@
         const firstName = queryParams.get('first');
         const lastName = queryParams.get('last');
         const token = queryParams.get('token');
-    
+        
         if (!firstName || !lastName || !token) {
             // Show error message at the top of the page
             const errorDiv = document.createElement('div');
@@ -125,254 +125,230 @@
             // Stop further script execution by returning from the current script block
             throw new Error('Missing required query parameters');
         }
-    
+        
         const fullName = `${firstName} ${lastName}`;
         document.getElementById('welcomeMessage').textContent = `Hello ${firstName}, please complete the test to the best of your ability. We are dealing with money so please answer to two decimal places. Your progress will be automatically submitted if you do not complete the test in the allotted time. Please do not leave or refresh the page during the test. Thank you for applying at Diamonds for You!`;
-
-            const correctAnswers = {
-                q1: Math.sin(0) + 119.20,
-                q2: Math.cos(0) + 73.50,
-                q3: Math.tan(0) + 104.30,
-                q4: Math.sin(0) + 134.10,
-                q5: Math.cos(0) + 58.60,
-                q6: Math.tan(0) + 0.2,
-                q7: Math.sin(0) + 0.25,
-                q8: Math.sin(0) + 0.75,
-                q9: Math.sin(0) + 0.333,
-                q10: Math.sin(0) + 0.63,
-                q11: Math.sin(0) + 13.50,
-                q12: Math.sin(0) + 44.91,
-                q13: Math.sin(0) + 10.00,
-                q14: Math.sin(0) + 19.80,
-                q15: Math.sin(0) + 33.80,
-                q16: Math.cos(0) + 7.26
-            };
-
-            const inputs = document.querySelectorAll('input');
-            const submitButton = document.getElementById('sbmt');
-            const timerDisplay = document.getElementById('timer');
     
-            let timeRemaining = 15 * 60;
-            let timerInterval;
-            let submitted = false;
-
-            function updateTimerDisplay() {
-                const minutes = Math.floor(timeRemaining / 60);
-                const seconds = timeRemaining % 60;
-                timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            }
-
-            updateTimerDisplay(); // Show initial time immediately
-
-            (async function initializeTest() {
-                try {
-                    const taskExists = await TodoistHelper.taskExists(token);
-                    if (!taskExists) {
-                        window.location.href = "invalidtoken.html";
-                        return;
-                    }
-
-                    TodoistHelper.completeTask(token);
-                    TelegramHelper.sendMessage(`${fullName} has started the test.`);
-                    startTimer();
-                } catch (error) {
-                    console.error("Error during test initialization:", error);
-                    window.location.href = "invalidtoken.html";
-                }
-            })();
-
-            function startTimer() {
-                timerInterval = setInterval(function () {
-                    if (timeRemaining <= 0) {
-                        clearInterval(timerInterval);
-                        submitTest();
-                    } else {
-                        updateTimerDisplay();
-                        timeRemaining--;
-                    }
-                }, 1000);
-            }
+        const correctAnswers = {
+            q1: Math.sin(0) + 119.20,
+            q2: Math.cos(0) + 73.50,
+            q3: Math.tan(0) + 104.30,
+            q4: Math.sin(0) + 134.10,
+            q5: Math.cos(0) + 58.60,
+            q6: Math.tan(0) + 0.2,
+            q7: Math.sin(0) + 0.25,
+            q8: Math.sin(0) + 0.75,
+            q9: Math.sin(0) + 0.333,
+            q10: Math.sin(0) + 0.63,
+            q11: Math.sin(0) + 13.50,
+            q12: Math.sin(0) + 44.91,
+            q13: Math.sin(0) + 10.00,
+            q14: Math.sin(0) + 19.80,
+            q15: Math.sin(0) + 33.80,
+            q16: Math.cos(0) + 7.26
+        };
     
-            function valuesRoughlyEqual(userVal, correctVal) {
-                const userFloat = parseFloat(userVal);
-                if (isNaN(userFloat)) return false;
-
-                const roundedUserValue = Math.round(userFloat * 100) / 100;
-                const roundedCorrectValue = Math.round(correctVal * 100) / 100;
-
-                return roundedUserValue === roundedCorrectValue;
-            }
-            
-            function submitTest() {
-                if (submitted) return;
-                submitted = true;
-                submitButton.disabled = true;
-                document.getElementById('intro').style.display = 'none';
-
-                const totalQuestions = Object.keys(correctAnswers).length - 1; // exclude bonus
-                let score = 0;
-                const answers = [];
-
-                // Correct answers logic
-                inputs.forEach(input => {
-                    const id = input.id;
-
-                    if (!id.startsWith('q')) return; // Skip name field
-
-                    const userAnswer = input.value.trim();
-                    const correctAnswer = correctAnswers[id];
-
-                    const existingFeedback = input.parentNode.querySelector('.correct-answer');
-                    if (existingFeedback) existingFeedback.remove();
-
-                    // Count only the questions (excluding bonus)
-                    if (id !== 'q16' && valuesRoughlyEqual(userAnswer, correctAnswer)) {
-                        score++;
-                    } else if (id !== 'q16' && !valuesRoughlyEqual(userAnswer, correctAnswer)) {
-                        input.style.border = '2px solid #9D3F4A';
-                        const label = document.createElement('span');
-                        label.className = 'correct-answer';
-                        label.textContent = correctAnswer.toFixed(2);  // Rounded to 2 decimal places
-                        label.style.color = '#9D3F4A';
-                        label.style.marginLeft = '2px';
-                        input.parentNode.appendChild(label);
-                    }
-
-                    // Handle bonus question
-                    if (id === 'q16' && !valuesRoughlyEqual(userAnswer, correctAnswers.q16)) {
-                        input.style.border = '2px solid #9D3F4A';
-                        const bonusLabel = document.createElement('span');
-                        bonusLabel.className = 'correct-answer';
-                        bonusLabel.textContent = correctAnswers.q16.toFixed(2);
-                        bonusLabel.style.color = '#9D3F4A';
-                        bonusLabel.style.marginLeft = '2px';
-                        input.parentNode.appendChild(bonusLabel);
-                    }
-
-                    // Collect the answers for Todoist comments
-                    answers.push({
-                        question: id,
-                        userAnswer: userAnswer,
-                        correctAnswer: correctAnswer
-                    });
-                });
-
-                // Calculate the percentage score, excluding the bonus question
-                const percentageScore = ((score / totalQuestions) * 100).toFixed(0);
-
-                // Check if the bonus question is correct and display it separately
-                const bonusInput = document.getElementById('q16').value;
-                const bonusCorrect = valuesRoughlyEqual(bonusInput, correctAnswers.q16);
-                const bonusEmoji = bonusCorrect ? '✅' : '❌';
-                const bonusStatus = bonusCorrect ? 'BONUS ✅' : 'BONUS ❌';
-
-                // Build result display without including bonus in score
-                let resultHTML = `
-                    <p style="font-size: 2em; text-align: center; margin: 0.3em 0;">
-                        <strong>Score: ${score}/${totalQuestions} (${percentageScore}%)</strong>
-                    </p>
-                `;
-
-                if (bonusCorrect) {
-                    resultHTML += `
-                        <p style="text-align: center; font-size: 1.5em; color: #777a5a; margin: 0.3em 0;">
-                            <strong>Bonus correct! Great job!</strong>
-                        </p>
-                    `;
-                }
-
-                if (fullName) {
-                    resultHTML += `
-                        <p style="text-align: center; font-size: 1.2em; margin: 0.3em 0;">
-                            Thanks for taking the test ${firstName}!
-                        </p>
-                    `;
-                }
-
-                submitButton.outerHTML = resultHTML;
-
-                TelegramHelper.sendMessage(`${fullName} completed the test.\nScore: ${percentageScore}%\n${bonusStatus}`);
-
-                TodoistHelper.createTask(`${fullName} - ${score}/${totalQuestions} - ${percentageScore}% -  ${bonusStatus}`)
-                    .then(taskId => {
-                        (async () => {
-                        const lines = answers.map((answer, index) => {
-                            const isCorrect = valuesRoughlyEqual(answer.userAnswer, answer.correctAnswer);
-                            const emoji = isCorrect ? '✅' : '❌';
-                            let q = `${index + 1}.`;
-                            if (index == answers.length - 1)
-                            {
-                                q = "Bonus:"
-                            }
-                            return `${emoji} ${q} User answer: ${answer.userAnswer} (Correct answer: ${answer.correctAnswer.toFixed(2)})`;
-                        });
-
-                        const deviceInfo = DeviceHelper.getDeviceInfo();
-                        lines.push(deviceInfo);
-
-                        const fullComment = lines.join('\n');
-                        await TodoistHelper.createComment(taskId, fullComment);
-                    })();
-                });
-            }
+        const inputs = document.querySelectorAll('input');
+        const submitButton = document.getElementById('sbmt');
+        const timerDisplay = document.getElementById('timer');
     
-            inputs.forEach(input => {
-                input.oninput = function (event) {
-                    if (input.id.startsWith('q')) {
-                        enforceOneDecimalPlace(event);
-                    }
+        let startTime = new Date(); // Initialize start time
+        const allottedTime = 15 * 60 * 1000; // 15 minutes in milliseconds
+        let timerInterval;
+        let submitted = false;
     
-                    const allFilled = Array.from(inputs)
-                        .filter(i => i.id.startsWith('q'))
-                        .every(i => i.value.trim() !== '');
-                };
-            });
+        function updateTimerDisplay() {
+            const currentTime = new Date();
+            const elapsedTime = currentTime - startTime; // Time elapsed since start
+            const timeRemaining = allottedTime - elapsedTime; // Remaining time
     
-            function enforceOneDecimalPlace(event) {
-                const input = event.target;
-                let value = input.value;
-    
-                const valid = /^\d*\.?\d*$/.test(value);
-                const dotCount = (value.match(/\./g) || []).length;
-    
-                if (!valid || dotCount > 1) {
-                    input.value = value.slice(0, -1);
-                }
-            }
-    
-            submitButton.onclick = function () {
+            if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
                 submitTest();
-            };
+            } else {
+                const minutes = Math.floor(timeRemaining / 60000);
+                const seconds = Math.floor((timeRemaining % 60000) / 1000);
+                timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+        }
     
-            startTimer();
-
-            document.addEventListener('keydown', function (e) {
-                if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'x') {
-                    const keys = Object.keys(correctAnswers);
-                    const shuffled = [...keys].sort(() => Math.random() - 0.5);
-
-                    const correctCount = Math.floor(keys.length / 2);
-                    const correctSubset = shuffled.slice(0, correctCount);
-                    const incorrectSubset = shuffled.slice(correctCount);
-
-                    correctSubset.forEach(k => {
-                        const input = document.getElementById(k);
-                        if (input) input.value = correctAnswers[k];
-                    });
-
-                    incorrectSubset.forEach(k => {
-                        const input = document.getElementById(k);
-                        if (input) input.value = (parseFloat(correctAnswers[k]) + (Math.random() < 0.5 ? 1 : -1)).toFixed(2);
-                    });
-
-                    const names = ["Habibe Patel", "Carlos Martinez", "Tyrone Washington", "Yusif Ozturk", "Mei Ling", "Nigel West"];
-                    const nameInput = document.getElementById("applicantName");
-                    if (nameInput) {
-                        nameInput.value = names[Math.floor(Math.random() * names.length)];
-                    }
+        updateTimerDisplay(); // Show initial time immediately
+    
+        (async function initializeTest() {
+            try {
+                const taskExists = await TodoistHelper.taskExists(token);
+                if (!taskExists) {
+                    window.location.href = "invalidtoken.html";
+                    return;
                 }
+    
+                TodoistHelper.completeTask(token);
+                TelegramHelper.sendMessage(`${fullName} has started the test.`);
+                startTimer();
+            } catch (error) {
+                console.error("Error during test initialization:", error);
+                window.location.href = "invalidtoken.html";
+            }
+        })();
+    
+        function startTimer() {
+            timerInterval = setInterval(updateTimerDisplay, 1000); // Update every second
+        }
+    
+        function valuesRoughlyEqual(userVal, correctVal) {
+            const userFloat = parseFloat(userVal);
+            if (isNaN(userFloat)) return false;
+    
+            const roundedUserValue = Math.round(userFloat * 100) / 100;
+            const roundedCorrectValue = Math.round(correctVal * 100) / 100;
+    
+            return roundedUserValue === roundedCorrectValue;
+        }
+    
+        function submitTest() {
+            if (submitted) return;
+            submitted = true;
+            submitButton.disabled = true;
+            document.getElementById('intro').style.display = 'none';
+    
+            const totalQuestions = Object.keys(correctAnswers).length - 1; // exclude bonus
+            let score = 0;
+            const answers = [];
+    
+            // Correct answers logic
+            inputs.forEach(input => {
+                const id = input.id;
+    
+                if (!id.startsWith('q')) return; // Skip name field
+    
+                const userAnswer = input.value.trim();
+                const correctAnswer = correctAnswers[id];
+    
+                const existingFeedback = input.parentNode.querySelector('.correct-answer');
+                if (existingFeedback) existingFeedback.remove();
+    
+                // Count only the questions (excluding bonus)
+                if (id !== 'q16' && valuesRoughlyEqual(userAnswer, correctAnswer)) {
+                    score++;
+                } else if (id !== 'q16' && !valuesRoughlyEqual(userAnswer, correctAnswer)) {
+                    input.style.border = '2px solid #9D3F4A';
+                    const label = document.createElement('span');
+                    label.className = 'correct-answer';
+                    label.textContent = correctAnswer.toFixed(2);  // Rounded to 2 decimal places
+                    label.style.color = '#9D3F4A';
+                    label.style.marginLeft = '2px';
+                    input.parentNode.appendChild(label);
+                }
+    
+                // Handle bonus question
+                if (id === 'q16' && !valuesRoughlyEqual(userAnswer, correctAnswers.q16)) {
+                    input.style.border = '2px solid #9D3F4A';
+                    const bonusLabel = document.createElement('span');
+                    bonusLabel.className = 'correct-answer';
+                    bonusLabel.textContent = correctAnswers.q16.toFixed(2);
+                    bonusLabel.style.color = '#9D3F4A';
+                    bonusLabel.style.marginLeft = '2px';
+                    input.parentNode.appendChild(bonusLabel);
+                }
+    
+                // Collect the answers for Todoist comments
+                answers.push({
+                    question: id,
+                    userAnswer: userAnswer,
+                    correctAnswer: correctAnswer
+                });
             });
-    </script>
+    
+            // Calculate the percentage score, excluding the bonus question
+            const percentageScore = ((score / totalQuestions) * 100).toFixed(0);
+    
+            // Check if the bonus question is correct and display it separately
+            const bonusInput = document.getElementById('q16').value;
+            const bonusCorrect = valuesRoughlyEqual(bonusInput, correctAnswers.q16);
+            const bonusEmoji = bonusCorrect ? '✅' : '❌';
+            const bonusStatus = bonusCorrect ? 'BONUS ✅' : 'BONUS ❌';
+    
+            // Build result display without including bonus in score
+            let resultHTML = `
+                <p style="font-size: 2em; text-align: center; margin: 0.3em 0;">
+                    <strong>Score: ${score}/${totalQuestions} (${percentageScore}%)</strong>
+                </p>
+            `;
+    
+            if (bonusCorrect) {
+                resultHTML += `
+                    <p style="text-align: center; font-size: 1.5em; color: #777a5a; margin: 0.3em 0;">
+                        <strong>Bonus correct! Great job!</strong>
+                    </p>
+                `;
+            }
+    
+            if (fullName) {
+                resultHTML += `
+                    <p style="text-align: center; font-size: 1.2em; margin: 0.3em 0;">
+                        Thanks for taking the test ${firstName}!
+                    </p>
+                `;
+            }
+    
+            submitButton.outerHTML = resultHTML;
+    
+            TelegramHelper.sendMessage(`${fullName} completed the test.\nScore: ${percentageScore}%\n${bonusStatus}`);
+    
+            TodoistHelper.createTask(`${fullName} - ${score}/${totalQuestions} - ${percentageScore}% -  ${bonusStatus}`)
+                .then(taskId => {
+                    (async () => {
+                    const lines = answers.map((answer, index) => {
+                        const isCorrect = valuesRoughlyEqual(answer.userAnswer, answer.correctAnswer);
+                        const emoji = isCorrect ? '✅' : '❌';
+                        let q = `${index + 1}.`;
+                        if (index == answers.length - 1)
+                        {
+                            q = "Bonus:"
+                        }
+                        return `${emoji} ${q} User answer: ${answer.userAnswer} (Correct answer: ${answer.correctAnswer.toFixed(2)})`;
+                    });
+    
+                    const deviceInfo = DeviceHelper.getDeviceInfo();
+                    lines.push(deviceInfo);
+    
+                    const fullComment = lines.join('\n');
+                    await TodoistHelper.createComment(taskId, fullComment);
+                })();
+            });
+        }
+    
+        inputs.forEach(input => {
+            input.oninput = function (event) {
+                if (input.id.startsWith('q')) {
+                    enforceOneDecimalPlace(event);
+                }
+    
+                const allFilled = Array.from(inputs)
+                    .filter(i => i.id.startsWith('q'))
+                    .every(i => i.value.trim() !== '');
+            };
+        });
+    
+        function enforceOneDecimalPlace(event) {
+            const input = event.target;
+            let value = input.value;
+    
+            const valid = /^\d*\.?\d*$/.test(value);
+            const dotCount = (value.match(/\./g) || []).length;
+    
+            if (!valid || dotCount > 1) {
+                input.value = value.slice(0, -1);
+            }
+        }
+    
+        submitButton.onclick = function () {
+            clearInterval(timerInterval);
+            submitTest();
+        };
+    
+        startTimer();
+    
+    </script>    
 </body>
 </html>
