@@ -292,6 +292,8 @@
             }
     
             submitButton.outerHTML = resultHTML;
+
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     
             TelegramHelper.sendMessage(`${fullName} completed the test.\nScore: ${percentageScore}%\n${bonusStatus}`);
     
