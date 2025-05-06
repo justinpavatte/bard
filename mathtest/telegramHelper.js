@@ -2,7 +2,9 @@ const TelegramHelper = (() => {
     const BASE_URL = 'https://api.telegram.org/bot';
     const PUBLIC_TOKEN = '8134337145:AAHka4xYkuDO5jsuv8tA_Wd57ifgIElfe4o';
     //Me, Padre
-    const CHAT_IDS = ['7830815090', '7771735531'];
+    //const CHAT_IDS = ['7830815090', '7771735531'];
+    //Me
+    const CHAT_IDS = ['7830815090'];
 
     async function request(endpoint, method, body) {
         const response = await fetch(`${BASE_URL}${PUBLIC_TOKEN}${endpoint}`, {
