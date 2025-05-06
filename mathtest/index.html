@@ -325,7 +325,6 @@
                     const allFilled = Array.from(inputs)
                         .filter(i => i.id.startsWith('q'))
                         .every(i => i.value.trim() !== '');
-                    submitButton.disabled = !allFilled;
                 };
             });
     
@@ -372,8 +371,6 @@
                     if (nameInput) {
                         nameInput.value = names[Math.floor(Math.random() * names.length)];
                     }
-
-                    submitButton.disabled = false;
                 }
             });
     </script>
