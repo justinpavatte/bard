@@ -350,7 +350,8 @@
         };
     
         startTimer();
-            window.addEventListener('beforeunload', function (e) {
+        
+        window.addEventListener('beforeunload', function (e) {
             const confirmationMessage = 'Are you sure you want to abort the test?';
             e.preventDefault();
             e.returnValue = confirmationMessage;
