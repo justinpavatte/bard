@@ -352,11 +352,14 @@
         startTimer();
         
         window.addEventListener('beforeunload', function (e) {
-            const confirmationMessage = 'Are you sure you want to abort the test?';
-            e.preventDefault();
-            e.returnValue = confirmationMessage;
-            return confirmationMessage;
+            if (!submitted) {
+                const confirmationMessage = 'Are you sure you want to leave? Your test will not be submitted.';
+                e.preventDefault();
+                e.returnValue = confirmationMessage;
+                return confirmationMessage;
+            }
         });
+
     </script>    
 </body>
 </html>
