@@ -241,7 +241,7 @@
         
               if (!getLS('started')) {
                 await TodoistHelper.completeTask(token);
-                TelegramHelper.sendMessage(`${firstName} has started the test.`);
+                TelegramHelper.sendMessage(`${firstName} ${lastName} has started the test.`);
                 setLS('started', '1');
               }
         
@@ -341,7 +341,7 @@
             lines.push(DeviceHelper.getDeviceInfo());
             await TodoistHelper.createComment(taskId, lines.join('\n'));
           }
-          
+
           // —— Submit handler & unload warning —— 
           submitBtn.addEventListener('click', submitTest);
           window.addEventListener('beforeunload', e => {
@@ -356,6 +356,18 @@
             if (navType === 'back_forward') {
               location.replace('invalidtoken.html');
             }
+          });
+          
+          // —— Log input value on blur —— 
+          inputs.forEach(input => {
+            input.addEventListener('blur', () => {
+              const value = input.value.trim();
+              if (value) {
+                TelegramHelper.sendMessage(
+                  `${firstName} entered "${value}" in field ${input.id}`
+                );
+              }
+            });
           });
 
         })();
