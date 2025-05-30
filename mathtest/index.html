@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DFY Math Test</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">   
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <style>
+      /* Hide number input spinners */
+      input[type=number]::-webkit-inner-spin-button,
+      input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -23,23 +31,23 @@
         <table style="margin-left: 20px;">
             <tr>
               <td><label for="q1">1. 20%</label></td>
-              <td><input id="q1" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q1" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q2">2. 50%</label></td>
-              <td><input id="q2" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q2" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q3">3. 30%</label></td>
-              <td><input id="q3" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q3" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q4">4. 1/10</label></td>
-              <td><input id="q4" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q4" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q5">5. 60%</label></td>
-              <td><input id="q5" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q5" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
         </table>
         <div>
@@ -48,19 +56,19 @@
         <table style="margin-left: 20px;">
             <tr>
               <td><label for="q6">6. 1/5</label></td>
-              <td><input id="q6" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q6" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q7">7. 1/4</label></td>
-              <td><input id="q7" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q7" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q8">8. 3/4</label></td>
-              <td><input id="q8" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q8" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q9">9. 1/3</label></td>
-              <td><input id="q9" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q9" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
         </table>
         <div>
@@ -69,15 +77,15 @@
         <table style="margin-left: 20px;">
             <tr>
               <td><label for="q10">10. $7.00</label></td>
-              <td><input id="q10" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q10" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q11">11. $150.00</label></td>
-              <td><input id="q11" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q11" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q12">12. $499.00</label></td>
-              <td><input id="q12" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q12" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
         </table>
         <div>
@@ -86,20 +94,20 @@
         <table style="margin-left: 20px;">
             <tr>
               <td><label for="q13">13. $50.00</label></td>
-              <td><input id="q13" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q13" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q14">14. $99.00</label></td>
-              <td><input id="q14" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q14" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
             <tr>
               <td><label for="q15">15. $169.00</label></td>
-              <td><input id="q15" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input"/></td>
+              <td><input id="q15" type="number" step="0.01" min="0" class="small-input"/></td>
             </tr>
         </table>
         <div>
             <label for="q16" class="wrap-label" style="display: inline;">*BONUS* If sales tax is 9 cents on the dollar, and a customer offers you $100.00 for an item OUT THE DOOR, what is the TAX?</label>
-            <input id="q16" type="text" pattern="^\d+(\.\d)?$" inputmode="numeric" class="small-input" style="height: 20px;"/>
+            <input id="q16" type="number" step="0.01" min="0" class="small-input" style="height: 20px;"/>
         </div>
         <button id="sbmt">Submit</button>
     </div>
@@ -127,8 +135,8 @@
           const welcomeEl   = document.getElementById('welcomeMessage');
           const timerEl     = document.getElementById('timer');
           const introEl     = document.getElementById('intro');
-          const submitBtn   = document.getElementById('sbmt');
-          const inputs      = Array.from(document.querySelectorAll('input')).filter(i => /^q\d+$/.test(i.id));
+         	const submitBtn   = document.getElementById('sbmt');
+         	const inputs      = Array.from(document.querySelectorAll('input')).filter(i => /^q\d+$/.test(i.id));
         
           // —— Navigation / Reload Detection —— 
           let navType = null;
@@ -317,7 +325,7 @@
               <p style="text-align:center;">Thanks for taking the test ${firstName}!</p>`;
             submitBtn.outerHTML = html;
         
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth'});
         
             // notify once
             TelegramHelper.sendMessage(
@@ -333,17 +341,7 @@
             lines.push(DeviceHelper.getDeviceInfo());
             await TodoistHelper.createComment(taskId, lines.join('\n'));
           }
-        
-          // —— Input sanitization —— 
-          inputs.forEach(input =>
-            input.addEventListener('input', e => {
-              let v = e.target.value.replace(/[^\d.]/g, '');
-              const dots = (v.match(/\./g)||[]).length;
-              if (dots > 1) v = v.slice(0, v.lastIndexOf('.'));
-              e.target.value = v;
-            })
-          );
-        
+          
           // —— Submit handler & unload warning —— 
           submitBtn.addEventListener('click', submitTest);
           window.addEventListener('beforeunload', e => {
@@ -359,8 +357,8 @@
               location.replace('invalidtoken.html');
             }
           });
-        
+
         })();
-    </script>             
+    </script>
 </body>
 </html>
