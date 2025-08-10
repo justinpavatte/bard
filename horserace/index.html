@@ -1,6 +1,8 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
+  <!-- Need to run with Live Server for Firebase -->
+  <!-- http://127.0.0.1:5500/horserace/index.html?player=Justin -->
   <!-- https://justinpavatte.github.io/bard/horserace/index.html?player=Justin -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -15,7 +17,10 @@
 <body>
   <div id="topbar">
     <div id="playerInfo">Loading…</div>
-    <div id="finishConfig">Finish: <span id="finishDistanceLabel"></span></div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div id="finishConfig">Finish: <span id="finishDistanceLabel"></span></div>
+      <button id="adminResetBtn" class="challengeBtn hidden" title="Reset race for everyone">Reset Race</button>
+    </div>
   </div>
 
   <div id="banner" class="hidden" role="status" aria-live="polite"></div>
@@ -32,7 +37,6 @@
   <div id="toast" class="hidden" role="status" aria-live="polite"></div>
 
   <script type="module">
-    // Local app modules (these won’t break the page if they fail — we catch below when used)
     import { sendTelegramMessage } from "./telegram.js";
     import { challenges } from "./challenges.js";
 
@@ -50,7 +54,7 @@
       let lastErr;
       for (const url of urls) {
         try { return await import(url); }
-        catch (e) { lastErr = e; /* try next */ }
+        catch (e) { lastErr = e; }
       }
       throw lastErr ?? new Error("All import attempts failed");
     }
@@ -61,35 +65,25 @@
           const appMod = await importFirst(cdnVariants("firebase-app.js", ver));
           const dbMod  = await importFirst(cdnVariants("firebase-database.js", ver));
           return { appMod, dbMod, ver };
-        } catch {
-          // try next version
-        }
+        } catch {}
       }
       throw new Error("No Firebase CDN candidate worked");
     }
 
-    // Try to load user's firebaseConfig.js dynamically.
-    // Supported exports:
-    //   export function initFirebase(appMod, dbMod) { ... return rtdbOrNull }
-    //   OR export const FIREBASE_CONFIG = { apiKey: "...", ... }
     async function getDbFromUserConfig(appMod, dbMod) {
       try {
         const cfg = await import("./firebaseConfig.js");
-        // Case A: user provides initFirebase(appMod, dbMod)
-        if (typeof cfg.initFirebase === "function") {
-          return cfg.initFirebase(appMod, dbMod);
-        }
-        // Case B: user provides FIREBASE_CONFIG object
+        if (typeof cfg.initFirebase === "function") return cfg.initFirebase(appMod, dbMod);
         if (cfg.FIREBASE_CONFIG && typeof cfg.FIREBASE_CONFIG === "object") {
           const { initializeApp } = appMod;
           const { getDatabase } = dbMod;
           const app = initializeApp(cfg.FIREBASE_CONFIG);
           return getDatabase(app);
         }
-        console.warn("firebaseConfig.js found but exports were not recognized. Expected initFirebase(...) or FIREBASE_CONFIG.");
+        console.warn("firebaseConfig.js exports not recognized.");
         return null;
       } catch (e) {
-        console.warn("firebaseConfig.js not found or failed to load:", e);
+        console.warn("firebaseConfig.js not found/failed to load:", e);
         return null;
       }
     }
@@ -97,11 +91,10 @@
     /* =========================
        App config
        ========================= */
-    const FINISH_DISTANCE = 25;
+    const FINISH_DISTANCE = 10; // exactly 10 completions to win
     const COMPLETE_DISABLE_MS = 900;
-    const BOOT_FALLBACK_MS = 3500; // if no data in this time, go demo
+    const BOOT_FALLBACK_MS = 3500;
 
-    /* Player roster (order shown) */
     const PLAYERS = [
       { name: "Jana", emoji: "🐎" },
       { name: "Elaina", emoji: "🐴" },
@@ -119,6 +112,7 @@
     const challengesEl = document.getElementById("challenges");
     const bannerEl = document.getElementById("banner");
     const toastEl = document.getElementById("toast");
+    const adminResetBtn = document.getElementById("adminResetBtn");
 
     finishLabelEl && (finishLabelEl.textContent = FINISH_DISTANCE);
 
@@ -129,12 +123,16 @@
       try {
         const url = new URL(location.href);
         const q = url.searchParams.get("player");
-        if (q) {
-          localStorage.setItem("hr_player", q);
-          return q;
+        if (q && q.trim()) {
+          const clean = q.trim();
+          localStorage.setItem("hr_player", clean);
+          return clean;
         }
       } catch {}
-      return localStorage.getItem("hr_player") || null;
+      const stored = (localStorage.getItem("hr_player") || "").trim();
+      if (stored) return stored;
+      localStorage.setItem("hr_player", "Justin");
+      return "Justin";
     }
     const currentPlayer = getPlayerFromUrlOrStorage();
 
@@ -178,6 +176,53 @@
       bannerEl && bannerEl.classList.add("hidden");
     }
 
+    // Robust pixel-based positioning so the horse never overshoots the flag
+    function positionHorse(track, horse, finish, pos, max) {
+      const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+      const startPad = 8; // same as CSS left:8px baseline
+      const finishPad = 8; // same as .finishFlag right:8px
+
+      const trackW = track.clientWidth;
+      const horseW = horse.clientWidth || 0;
+      const flagW  = finish.clientWidth || 0;
+
+      // usable distance in px that the horse can travel
+      const usable = Math.max(0, trackW - (startPad + finishPad) - horseW - flagW);
+
+      const progress = clamp(Number(pos) / Number(max || 1), 0, 1);
+      const leftPx = startPad + usable * progress;
+
+      horse.style.left = `${Math.round(leftPx)}px`;
+      // keep vertical centering via translateY, but don't translateX anymore
+      horse.style.transform = `translateY(-50%)`;
+    }
+
+    function positionAllHorses() {
+      document.querySelectorAll(".lane").forEach(lane => {
+        const track = lane.querySelector(".track");
+        const horse = lane.querySelector(".horse");
+        const finish = lane.querySelector(".finishFlag");
+        const meta = lane.querySelector(".laneMeta");
+        if (!track || !horse || !finish) return;
+
+        // read pos from meta text (e.g., "3/10")
+        let pos = 0;
+        if (meta && meta.textContent) {
+          const m = meta.textContent.split("/")[0];
+          pos = Number(m) || 0;
+        }
+        positionHorse(track, horse, finish, pos, FINISH_DISTANCE);
+      });
+    }
+
+    // Reposition on resize/orientation changes
+    const ro = new ResizeObserver(() => positionAllHorses());
+    const observeTracks = () => {
+      document.querySelectorAll(".track").forEach(t => ro.observe(t));
+    };
+    window.addEventListener("resize", positionAllHorses);
+    window.addEventListener("orientationchange", positionAllHorses);
+
     function renderRaceBoard(raceData = {}) {
       raceBoardEl.innerHTML = "";
       PLAYERS.forEach(p => {
@@ -203,9 +248,6 @@
         horse.className = "horse";
         horse.textContent = p.emoji;
 
-        const pct = Math.min(100, (pos / FINISH_DISTANCE) * 100);
-        horse.style.transform = `translateX(${pct}%) translateY(-50%)`;
-
         const meta = document.createElement("div");
         meta.className = "laneMeta";
         meta.textContent = `${pos}/${FINISH_DISTANCE}`;
@@ -215,9 +257,16 @@
         lane.appendChild(label);
         lane.appendChild(track);
         lane.appendChild(meta);
-
         raceBoardEl.appendChild(lane);
+
+        // After in-DOM so sizes are correct
+        requestAnimationFrame(() => {
+          positionHorse(track, horse, finish, pos, FINISH_DISTANCE);
+        });
       });
+
+      // observe after rendering
+      observeTracks();
     }
 
     function renderChallenges(winnerName = null) {
@@ -278,7 +327,6 @@
         }
         return false;
       }
-      // db-dependent path gets injected later
       try {
         const { ref, runTransaction } = firebaseDB;
         const winnerRef = ref(db, "winner");
@@ -316,7 +364,6 @@
         return;
       }
 
-      // Real DB mode
       try {
         const { ref, runTransaction } = firebaseDB;
         const playerPosRef = ref(db, `race/${currentPlayer}/position`);
@@ -334,7 +381,6 @@
         if (posAfter >= FINISH_DISTANCE) {
           const iSet = await attemptSetWinner(currentPlayer);
           if (iSet) notifyTelegram(`🏁 WINNER: ${currentPlayer} at ${posAfter}/${FINISH_DISTANCE}`);
-          // banner will update via winner listener
         }
       } catch (err) {
         console.error("handleComplete error", err);
@@ -344,15 +390,68 @@
     }
 
     /* =========================
+       Admin reset (Justin only)
+       ========================= */
+    async function handleAdminReset() {
+      if (!confirm("Reset the entire race for everyone? This clears the winner and sets all positions to 0.")) return;
+
+      adminResetBtn.disabled = true;
+      setTimeout(() => { adminResetBtn.disabled = false; }, 1200);
+
+      if (demoMode) {
+        demoState.winner = null;
+        demoState.race = zeroRaceData();
+        hideBanner();
+        renderRaceBoard(demoState.race);
+        renderChallenges(null);
+        showToast("Race reset (demo)");
+        try { await notifyTelegram("🔄 Race reset (demo mode)"); } catch {}
+        return;
+      }
+
+      try {
+        const { ref, set } = firebaseDB;
+        await Promise.all([
+          set(ref(db, "race"), zeroRaceData()),
+          set(ref(db, "winner"), null)
+        ]);
+        hideBanner();
+        showToast("Race reset");
+        try { await notifyTelegram("🔄 Race reset by Justin"); } catch {}
+      } catch (err) {
+        console.error("Admin reset failed:", err);
+        showToast("Reset failed");
+      }
+    }
+
+    /* =========================
        Page mode + init
        ========================= */
     function initPageMode() {
-      if (currentPlayer) {
-        playerInfoEl && (playerInfoEl.textContent = `${currentPlayer} — ${getEmojiForPlayer(currentPlayer) || ""}`);
+      const name = (currentPlayer || "").trim();
+      const lower = name.toLowerCase();
+
+      if (name) {
+        playerInfoEl && (playerInfoEl.textContent = `${name} — ${getEmojiForPlayer(name) || ""}`);
         challengesWrap && challengesWrap.classList.remove("hidden");
       } else {
         playerInfoEl && (playerInfoEl.textContent = "Spectator view");
         challengesWrap && challengesWrap.classList.add("hidden");
+      }
+
+      let adminOverride = false;
+      try {
+        const url = new URL(location.href);
+        adminOverride = url.searchParams.get("admin") === "1";
+      } catch {}
+      const isJustin = lower === "justin" || adminOverride;
+
+      if (isJustin) {
+        adminResetBtn?.classList.remove("hidden");
+        adminResetBtn?.removeEventListener("click", handleAdminReset);
+        adminResetBtn?.addEventListener("click", handleAdminReset);
+      } else {
+        adminResetBtn?.classList.add("hidden");
       }
     }
     function getEmojiForPlayer(name) {
@@ -408,7 +507,7 @@
     let demoMode = false;
     let unsubRace = null;
     let unsubWinner = null;
-    let firebaseDB = null; // holds ref/onValue/runTransaction/etc after load
+    let firebaseDB = null;
 
     function fallbackToDemo(reason = "Offline demo mode") {
       if (unsubRace) { try { unsubRace(); } catch {} }
@@ -421,7 +520,6 @@
       renderChallenges(null);
     }
 
-    // Render something immediately so you never see just "Loading…"
     initPageMode();
     renderRaceBoard(zeroRaceData());
     renderChallenges(null);
@@ -430,22 +528,18 @@
     let bootTimer = null;
 
     try {
-      // Load Firebase libs from whichever CDN/version works
-      const { appMod, dbMod, ver } = await loadFirebaseModules();
+      const { appMod, dbMod } = await loadFirebaseModules();
       firebaseDB = dbMod;
 
-      // Acquire DB from user's firebaseConfig.js (supports two styles)
       db = await getDbFromUserConfig(appMod, dbMod);
       if (!db) throw new Error("No Firebase config or init function provided");
 
-      // Watchdog in case rules/paths block initial read
       bootTimer = setTimeout(() => {
         fallbackToDemo("No realtime data — demo mode");
       }, BOOT_FALLBACK_MS);
 
       const { ref, onValue } = dbMod;
 
-      // Race subscription
       unsubRace = onValue(ref(db, "race"), (snapshot) => {
         clearTimeout(bootTimer);
         const data = snapshot.val() || {};
@@ -455,12 +549,13 @@
           }
         }
         renderRaceBoard(data);
+        // ensure correct placement after data updates
+        requestAnimationFrame(positionAllHorses);
       }, (err) => {
         console.error("race onValue error", err);
         fallbackToDemo("Realtime error — demo mode");
       });
 
-      // Winner subscription
       unsubWinner = onValue(ref(db, "winner"), (snap) => {
         const w = snap.exists() ? snap.val() : null;
         if (w) {
@@ -472,7 +567,6 @@
         }
       }, (err) => {
         console.error("winner onValue error", err);
-        // Not fatal—just hide banner and keep going
         hideBanner();
       });
 
