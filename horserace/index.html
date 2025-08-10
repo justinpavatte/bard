@@ -148,7 +148,118 @@
     };
 
     /* =========================
-       Helpers
+       Positioning helpers (pixel-precise)
+       ========================= */
+    function positionHorse(track, horse, finish, pos, max) {
+      const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+      const startPad = 8;   // same as CSS left:8px baseline
+      const finishPad = 8;  // same as .finishFlag right:8px
+
+      const trackW = track.clientWidth;
+      const horseW = horse.clientWidth || 0;
+      const flagW  = finish.clientWidth || 0;
+
+      // distance the horse can travel without overlapping the flag
+      const usable = Math.max(0, trackW - (startPad + finishPad) - horseW - flagW);
+
+      const progress = clamp(Number(pos) / Number(max || 1), 0, 1);
+      const leftPx = startPad + usable * progress;
+
+      horse.style.left = `${Math.round(leftPx)}px`;
+      horse.style.transform = `translateY(-50%)`; // keep vertical centering
+    }
+
+    /* =========================
+       Build once + update only (no DOM rebuild => no snap back)
+       ========================= */
+    const UI = {
+      built: false,
+      lanes: new Map(), // name -> { lane, track, horse, finish, meta, mounted }
+      ro: null,
+    };
+
+    function buildRaceBoard() {
+      raceBoardEl.innerHTML = "";
+      UI.lanes.clear();
+      if (UI.ro) { try { UI.ro.disconnect(); } catch {} }
+      UI.ro = new ResizeObserver(() => positionAllHorses());
+
+      PLAYERS.forEach(p => {
+        const lane = document.createElement("div");
+        lane.className = "lane";
+        lane.dataset.player = p.name;
+
+        const label = document.createElement("div");
+        label.className = "laneLabel";
+        label.innerHTML = `<span class="horseEmoji">${p.emoji}</span><div>${p.name}</div>`;
+
+        const track = document.createElement("div");
+        track.className = "track";
+
+        const finish = document.createElement("div");
+        finish.className = "finishFlag";
+        finish.textContent = "🏁";
+
+        const horse = document.createElement("div");
+        horse.className = "horse";
+        horse.textContent = p.emoji;
+
+        const meta = document.createElement("div");
+        meta.className = "laneMeta";
+        meta.textContent = `0/${FINISH_DISTANCE}`;
+
+        track.appendChild(horse);
+        track.appendChild(finish);
+        lane.appendChild(label);
+        lane.appendChild(track);
+        lane.appendChild(meta);
+        raceBoardEl.appendChild(lane);
+
+        UI.ro.observe(track);
+        UI.lanes.set(p.name, { lane, track, horse, finish, meta, mounted: false });
+      });
+
+      UI.built = true;
+    }
+
+    function updateRaceBoard(raceData = {}) {
+      if (!UI.built) buildRaceBoard();
+
+      PLAYERS.forEach(p => {
+        const ui = UI.lanes.get(p.name);
+        if (!ui) return;
+
+        const pos = (raceData[p.name] && typeof raceData[p.name].position === "number")
+          ? raceData[p.name].position : 0;
+
+        ui.meta.textContent = `${pos}/${FINISH_DISTANCE}`;
+
+        // On first paint for each lane: set without transition to avoid a jump
+        if (!ui.mounted) {
+          const prev = ui.horse.style.transition;
+          ui.horse.style.transition = "none";
+          positionHorse(ui.track, ui.horse, ui.finish, pos, FINISH_DISTANCE);
+          void ui.horse.offsetWidth; // reflow
+          ui.horse.style.transition = prev || "";
+          ui.mounted = true;
+        } else {
+          positionHorse(ui.track, ui.horse, ui.finish, pos, FINISH_DISTANCE);
+        }
+      });
+    }
+
+    function positionAllHorses() {
+      UI.lanes.forEach(({ track, horse, finish, meta }) => {
+        const [cur = "0"] = (meta.textContent || "").split("/");
+        positionHorse(track, horse, finish, Number(cur) || 0, FINISH_DISTANCE);
+      });
+    }
+
+    window.addEventListener("resize", positionAllHorses);
+    window.addEventListener("orientationchange", positionAllHorses);
+
+    /* =========================
+       Other UI helpers
        ========================= */
     function zeroRaceData() {
       return PLAYERS.reduce((acc, p) => {
@@ -174,99 +285,6 @@
 
     function hideBanner() {
       bannerEl && bannerEl.classList.add("hidden");
-    }
-
-    // Robust pixel-based positioning so the horse never overshoots the flag
-    function positionHorse(track, horse, finish, pos, max) {
-      const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-      const startPad = 8; // same as CSS left:8px baseline
-      const finishPad = 8; // same as .finishFlag right:8px
-
-      const trackW = track.clientWidth;
-      const horseW = horse.clientWidth || 0;
-      const flagW  = finish.clientWidth || 0;
-
-      // usable distance in px that the horse can travel
-      const usable = Math.max(0, trackW - (startPad + finishPad) - horseW - flagW);
-
-      const progress = clamp(Number(pos) / Number(max || 1), 0, 1);
-      const leftPx = startPad + usable * progress;
-
-      horse.style.left = `${Math.round(leftPx)}px`;
-      // keep vertical centering via translateY, but don't translateX anymore
-      horse.style.transform = `translateY(-50%)`;
-    }
-
-    function positionAllHorses() {
-      document.querySelectorAll(".lane").forEach(lane => {
-        const track = lane.querySelector(".track");
-        const horse = lane.querySelector(".horse");
-        const finish = lane.querySelector(".finishFlag");
-        const meta = lane.querySelector(".laneMeta");
-        if (!track || !horse || !finish) return;
-
-        // read pos from meta text (e.g., "3/10")
-        let pos = 0;
-        if (meta && meta.textContent) {
-          const m = meta.textContent.split("/")[0];
-          pos = Number(m) || 0;
-        }
-        positionHorse(track, horse, finish, pos, FINISH_DISTANCE);
-      });
-    }
-
-    // Reposition on resize/orientation changes
-    const ro = new ResizeObserver(() => positionAllHorses());
-    const observeTracks = () => {
-      document.querySelectorAll(".track").forEach(t => ro.observe(t));
-    };
-    window.addEventListener("resize", positionAllHorses);
-    window.addEventListener("orientationchange", positionAllHorses);
-
-    function renderRaceBoard(raceData = {}) {
-      raceBoardEl.innerHTML = "";
-      PLAYERS.forEach(p => {
-        const pos = (raceData[p.name] && typeof raceData[p.name].position === "number")
-          ? raceData[p.name].position : 0;
-
-        const lane = document.createElement("div");
-        lane.className = "lane";
-        lane.dataset.player = p.name;
-
-        const label = document.createElement("div");
-        label.className = "laneLabel";
-        label.innerHTML = `<span class="horseEmoji">${p.emoji}</span><div>${p.name}</div>`;
-
-        const track = document.createElement("div");
-        track.className = "track";
-
-        const finish = document.createElement("div");
-        finish.className = "finishFlag";
-        finish.textContent = "🏁";
-
-        const horse = document.createElement("div");
-        horse.className = "horse";
-        horse.textContent = p.emoji;
-
-        const meta = document.createElement("div");
-        meta.className = "laneMeta";
-        meta.textContent = `${pos}/${FINISH_DISTANCE}`;
-
-        track.appendChild(horse);
-        track.appendChild(finish);
-        lane.appendChild(label);
-        lane.appendChild(track);
-        lane.appendChild(meta);
-        raceBoardEl.appendChild(lane);
-
-        // After in-DOM so sizes are correct
-        requestAnimationFrame(() => {
-          positionHorse(track, horse, finish, pos, FINISH_DISTANCE);
-        });
-      });
-
-      // observe after rendering
-      observeTracks();
     }
 
     function renderChallenges(winnerName = null) {
@@ -353,7 +371,7 @@
         const before = demoState.race[currentPlayer]?.position || 0;
         const after = before + Number(challenge.delta || 1);
         demoState.race[currentPlayer] = { position: after };
-        renderRaceBoard(demoState.race);
+        updateRaceBoard(demoState.race);
         notifyTelegram(`🐎 ${currentPlayer} • ${challenge.id} (+${challenge.delta}) → pos ${after}/${FINISH_DISTANCE}`);
         if (after >= FINISH_DISTANCE) {
           const iSet = await attemptSetWinner(currentPlayer);
@@ -402,7 +420,7 @@
         demoState.winner = null;
         demoState.race = zeroRaceData();
         hideBanner();
-        renderRaceBoard(demoState.race);
+        updateRaceBoard(demoState.race);
         renderChallenges(null);
         showToast("Race reset (demo)");
         try { await notifyTelegram("🔄 Race reset (demo mode)"); } catch {}
@@ -417,6 +435,8 @@
         ]);
         hideBanner();
         showToast("Race reset");
+        // optional immediate visual reset before Firebase round-trip:
+        updateRaceBoard(zeroRaceData());
         try { await notifyTelegram("🔄 Race reset by Justin"); } catch {}
       } catch (err) {
         console.error("Admin reset failed:", err);
@@ -516,12 +536,14 @@
       console.warn("Falling back to demo:", reason);
       showToast(reason);
       hideBanner();
-      renderRaceBoard(demoState.race);
+      updateRaceBoard(demoState.race);
       renderChallenges(null);
     }
 
+    // Initial UI: build lanes once, then set zeros
     initPageMode();
-    renderRaceBoard(zeroRaceData());
+    buildRaceBoard();
+    updateRaceBoard(PLAYERS.reduce((a,p)=> (a[p.name]={position:0}, a), {}));
     renderChallenges(null);
     if (!currentPlayer) document.body.classList.add("spectator");
 
@@ -548,8 +570,7 @@
             data[k].position = Number(data[k].position);
           }
         }
-        renderRaceBoard(data);
-        // ensure correct placement after data updates
+        updateRaceBoard(data);
         requestAnimationFrame(positionAllHorses);
       }, (err) => {
         console.error("race onValue error", err);
