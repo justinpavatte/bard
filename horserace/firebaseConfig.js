@@ -1,9 +1,4 @@
-// firebaseConfig.js
-// Works with the resilient loader in index.html:
-// - If index.html calls initFirebase(appMod, dbMod), this exports that function.
-// - If index.html looks for FIREBASE_CONFIG, this exports that too.
-
-// Your actual Firebase project config:
+//Public Key
 export const FIREBASE_CONFIG = {
   apiKey: "AIzaSyB1cfRwtSCcFL1k6D3xHadpUQYfoS94l7c",
   authDomain: "horserace-2c628.firebaseapp.com",
@@ -15,7 +10,6 @@ export const FIREBASE_CONFIG = {
   measurementId: "G-P6LQYXE16J"
 };
 
-// Optional: quick sanity check for obvious placeholder configs (won’t block real keys)
 function looksLikePlaceholder(cfg) {
   if (!cfg || typeof cfg !== "object") return true;
   const s = Object.values(cfg).join(" ");

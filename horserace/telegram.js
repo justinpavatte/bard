@@ -1,4 +1,5 @@
 //dfy_horse_race_bot
+//Public Token
 const TELEGRAM_BOT_TOKEN = "8344279419:AAF5TP8CgKGJ0TesATlxQPUe5LUElNxs4b4";
 const TELEGRAM_CHAT_ID = "7830815090";
 
