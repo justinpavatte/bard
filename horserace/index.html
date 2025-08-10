@@ -178,6 +178,7 @@
       ro: null,
     };
 
+    // NEW: two-row layout per lane
     function buildRaceBoard() {
       raceBoardEl.innerHTML = "";
       UI.lanes.clear();
@@ -189,30 +190,42 @@
         lane.className = "lane";
         lane.dataset.player = p.name;
 
-        const label = document.createElement("div");
-        label.className = "laneLabel";
-        label.innerHTML = `<span class="horseEmoji">${p.emoji}</span><div>${p.name}</div>`;
+        // Row 1: emoji + name (left) and position meta (right)
+        const header = document.createElement("div");
+        header.className = "laneHeader";
 
-        const track = document.createElement("div");
-        track.className = "track";
-
-        const finish = document.createElement("div");
-        finish.className = "finishFlag";
-        finish.textContent = "🏁";
-
-        const horse = document.createElement("div");
-        horse.className = "horse";
-        horse.textContent = p.emoji;
+        const headerLeft = document.createElement("div");
+        headerLeft.className = "left";
+        headerLeft.innerHTML = `<div>${p.name}</div>`;
 
         const meta = document.createElement("div");
         meta.className = "laneMeta";
         meta.textContent = `0/${FINISH_DISTANCE}`;
 
+        header.appendChild(headerLeft);
+        header.appendChild(meta);
+
+        // Row 2: track with horse + finish flag
+        const trackRow = document.createElement("div");
+        trackRow.className = "trackRow";
+
+        const track = document.createElement("div");
+        track.className = "track";
+
+        const horse = document.createElement("div");
+        horse.className = "horse";
+        horse.textContent = p.emoji;
+
+        const finish = document.createElement("div");
+        finish.className = "finishFlag";
+        finish.textContent = "🏁";
+
         track.appendChild(horse);
         track.appendChild(finish);
-        lane.appendChild(label);
-        lane.appendChild(track);
-        lane.appendChild(meta);
+        trackRow.appendChild(track);
+
+        lane.appendChild(header);
+        lane.appendChild(trackRow);
         raceBoardEl.appendChild(lane);
 
         UI.ro.observe(track);
@@ -234,7 +247,7 @@
 
         ui.meta.textContent = `${pos}/${FINISH_DISTANCE}`;
 
-        // On first paint for each lane: set without transition to avoid a jump
+        // On first paint: set without transition to avoid a jump
         if (!ui.mounted) {
           const prev = ui.horse.style.transition;
           ui.horse.style.transition = "none";
@@ -313,7 +326,7 @@
 
         const btn = document.createElement("button");
         btn.className = "challengeBtn";
-        btn.textContent = `Complete (+${ch.delta})`;
+        btn.textContent = `Complete`;
         btn.disabled = disabled;
         btn.onclick = () => handleComplete(ch, btn);
 

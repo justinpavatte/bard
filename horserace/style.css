@@ -84,28 +84,40 @@ main#app{
 
 /* Race board */
 #raceBoard{display:flex;flex-direction:column;gap:12px}
+
+/* Two-row lane */
 .lane{
-  display:flex;align-items:center;padding:8px;
+  display:flex;flex-direction:column;gap:6px;
+  padding:8px;
   background:rgba(255,255,255,0.02);
   border-radius:var(--radius);
-  position:relative;overflow:hidden
 }
-.laneLabel{width:150px;display:flex;align-items:center;gap:8px;padding-left:8px;font-weight:700}
+
+/* Row 1: emoji+name (left) and meta (right) */
+.laneHeader{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 8px;
+}
+.laneHeader .left{
+  display:flex;align-items:center;gap:8px;font-weight:700;
+}
 .horseEmoji{font-size:26px}
+.laneMeta{font-size:14px;color:var(--muted)}
+
+/* Row 2: track with horse + finish flag */
+.trackRow{display:flex;align-items:center}
 .track{
   flex:1;height:56px;position:relative;
   background:linear-gradient(90deg,rgba(255,255,255,0.01),rgba(255,255,255,0.02));
-  border-radius:var(--radius);margin:0 12px;display:flex;align-items:center
+  border-radius:var(--radius);margin:0 8px;
 }
 .finishFlag{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:20px}
 .horse{
   position:absolute;left:8px;top:50%;
   transform:translateY(-50%);
-  /* animate left now (not translateX) */
   transition:left 450ms cubic-bezier(.2,.8,.2,1);
   font-size:30px;will-change:left, transform;
 }
-.laneMeta{width:92px;text-align:right;padding-right:8px;font-size:14px;color:var(--muted)}
 
 /* Challenges */
 #challengesWrap{
@@ -174,8 +186,6 @@ main#app{
   .track{height:46px}
   .horse{font-size:26px}
   .horseEmoji{font-size:22px}
-  .laneLabel{width:130px}
-  .laneMeta{width:80px;font-size:13px}
 }
 
 /* Tiny screens */
