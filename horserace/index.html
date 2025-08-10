@@ -70,6 +70,10 @@
       throw new Error("No Firebase CDN candidate worked");
     }
 
+    // Try to load user's firebaseConfig.js dynamically.
+    // Supported exports:
+    //   export function initFirebase(appMod, dbMod) { ... return rtdbOrNull }
+    //   OR export const FIREBASE_CONFIG = { apiKey: "...", ... }
     async function getDbFromUserConfig(appMod, dbMod) {
       try {
         const cfg = await import("./firebaseConfig.js");
@@ -190,7 +194,7 @@
         lane.className = "lane";
         lane.dataset.player = p.name;
 
-        // Row 1: emoji + name (left) and position meta (right)
+        // Row 1: name (left) and position meta (right)
         const header = document.createElement("div");
         header.className = "laneHeader";
 
@@ -233,6 +237,9 @@
       });
 
       UI.built = true;
+
+      // First positioning after everything is in the DOM
+      requestAnimationFrame(positionAllHorses);
     }
 
     function updateRaceBoard(raceData = {}) {
@@ -270,6 +277,12 @@
 
     window.addEventListener("resize", positionAllHorses);
     window.addEventListener("orientationchange", positionAllHorses);
+
+    // Extra passes so small iOS screens measure correctly
+    window.addEventListener('load', () => { positionAllHorses(); });
+    if ('fonts' in document && document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => { positionAllHorses(); }).catch(()=>{});
+    }
 
     /* =========================
        Other UI helpers
@@ -326,7 +339,7 @@
 
         const btn = document.createElement("button");
         btn.className = "challengeBtn";
-        btn.textContent = `Complete`;
+        btn.textContent = `Complete`; // no +1
         btn.disabled = disabled;
         btn.onclick = () => handleComplete(ch, btn);
 

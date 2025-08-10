@@ -91,12 +91,15 @@ main#app{
   padding:8px;
   background:rgba(255,255,255,0.02);
   border-radius:var(--radius);
+  position: relative;            /* stacking context */
 }
 
-/* Row 1: emoji+name (left) and meta (right) */
+/* Row 1: name (left) and meta (right) */
 .laneHeader{
   display:flex;align-items:center;justify-content:space-between;
   padding:0 8px;
+  position: relative;
+  z-index: 2;                    /* sits above track row */
 }
 .laneHeader .left{
   display:flex;align-items:center;gap:8px;font-weight:700;
@@ -105,18 +108,31 @@ main#app{
 .laneMeta{font-size:14px;color:var(--muted)}
 
 /* Row 2: track with horse + finish flag */
-.trackRow{display:flex;align-items:center}
+.trackRow{
+  display:flex;align-items:center;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
 .track{
   flex:1;height:56px;position:relative;
   background:linear-gradient(90deg,rgba(255,255,255,0.01),rgba(255,255,255,0.02));
   border-radius:var(--radius);margin:0 8px;
+  overflow: hidden;              /* no spill over header */
+  padding-right: 32px;           /* reserve space for flag */
+  min-width: 160px;              /* avoid ultra-narrow tracks */
 }
-.finishFlag{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:20px}
+.finishFlag{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:20px;
+  z-index: 1;
+  pointer-events:none;
+}
 .horse{
   position:absolute;left:8px;top:50%;
   transform:translateY(-50%);
   transition:left 450ms cubic-bezier(.2,.8,.2,1);
   font-size:30px;will-change:left, transform;
+  z-index: 1;
 }
 
 /* Challenges */
@@ -185,12 +201,12 @@ main#app{
   :root{ --topbar-offset:52px; }
   .track{height:46px}
   .horse{font-size:26px}
-  .horseEmoji{font-size:22px}
 }
 
 /* Tiny screens */
 @media (max-width:360px){
   #banner{ font-size:16px; }
+  .track{ min-width: 140px; }
 }
 
 /* Responsive split */
