@@ -1,15 +1,490 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- https://favicon.io/favicon-converter/ -->
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="manifest" href="site.webmanifest">
+  <!-- https://justinpavatte.github.io/bard/horserace/index.html?player=Justin -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Horse Race</title>
+  <!-- https://favicon.io/favicon-converter/ -->
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-hi
+  <div id="topbar">
+    <div id="playerInfo">Loading…</div>
+    <div id="finishConfig">Finish: <span id="finishDistanceLabel"></span></div>
+  </div>
+
+  <div id="banner" class="hidden" role="status" aria-live="polite"></div>
+
+  <main id="app">
+    <section id="raceBoard" aria-live="polite"></section>
+
+    <aside id="challengesWrap" class="hidden" aria-hidden="true">
+      <h2 class="sr-only">Challenges</h2>
+      <div id="challenges"></div>
+    </aside>
+  </main>
+
+  <div id="toast" class="hidden" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    // Local app modules (these won’t break the page if they fail — we catch below when used)
+    import { sendTelegramMessage } from "./telegram.js";
+    import { challenges } from "./challenges.js";
+
+    /* =========================
+       Solid Firebase loader (multi-CDN, multi-version)
+       ========================= */
+    const FIREBASE_CANDIDATE_VERS = ["11.0.0", "10.12.5"];
+    const cdnVariants = (file, ver) => ([
+      `https://www.gstatic.com/firebasejs/${ver}/${file}`,
+      `https://cdn.jsdelivr.net/npm/firebase@${ver}/${file}`,
+      `https://unpkg.com/firebase@${ver}/${file}`,
+    ]);
+
+    async function importFirst(urls) {
+      let lastErr;
+      for (const url of urls) {
+        try { return await import(url); }
+        catch (e) { lastErr = e; /* try next */ }
+      }
+      throw lastErr ?? new Error("All import attempts failed");
+    }
+
+    async function loadFirebaseModules() {
+      for (const ver of FIREBASE_CANDIDATE_VERS) {
+        try {
+          const appMod = await importFirst(cdnVariants("firebase-app.js", ver));
+          const dbMod  = await importFirst(cdnVariants("firebase-database.js", ver));
+          return { appMod, dbMod, ver };
+        } catch {
+          // try next version
+        }
+      }
+      throw new Error("No Firebase CDN candidate worked");
+    }
+
+    // Try to load user's firebaseConfig.js dynamically.
+    // Supported exports:
+    //   export function initFirebase(appMod, dbMod) { ... return rtdbOrNull }
+    //   OR export const FIREBASE_CONFIG = { apiKey: "...", ... }
+    async function getDbFromUserConfig(appMod, dbMod) {
+      try {
+        const cfg = await import("./firebaseConfig.js");
+        // Case A: user provides initFirebase(appMod, dbMod)
+        if (typeof cfg.initFirebase === "function") {
+          return cfg.initFirebase(appMod, dbMod);
+        }
+        // Case B: user provides FIREBASE_CONFIG object
+        if (cfg.FIREBASE_CONFIG && typeof cfg.FIREBASE_CONFIG === "object") {
+          const { initializeApp } = appMod;
+          const { getDatabase } = dbMod;
+          const app = initializeApp(cfg.FIREBASE_CONFIG);
+          return getDatabase(app);
+        }
+        console.warn("firebaseConfig.js found but exports were not recognized. Expected initFirebase(...) or FIREBASE_CONFIG.");
+        return null;
+      } catch (e) {
+        console.warn("firebaseConfig.js not found or failed to load:", e);
+        return null;
+      }
+    }
+
+    /* =========================
+       App config
+       ========================= */
+    const FINISH_DISTANCE = 25;
+    const COMPLETE_DISABLE_MS = 900;
+    const BOOT_FALLBACK_MS = 3500; // if no data in this time, go demo
+
+    /* Player roster (order shown) */
+    const PLAYERS = [
+      { name: "Jana", emoji: "🐎" },
+      { name: "Elaina", emoji: "🐴" },
+      { name: "Beverly", emoji: "🏇" },
+      { name: "Justin", emoji: "🐂" }
+    ];
+
+    /* =========================
+       DOM refs
+       ========================= */
+    const playerInfoEl = document.getElementById("playerInfo");
+    const finishLabelEl = document.getElementById("finishDistanceLabel");
+    const raceBoardEl = document.getElementById("raceBoard");
+    const challengesWrap = document.getElementById("challengesWrap");
+    const challengesEl = document.getElementById("challenges");
+    const bannerEl = document.getElementById("banner");
+    const toastEl = document.getElementById("toast");
+
+    finishLabelEl && (finishLabelEl.textContent = FINISH_DISTANCE);
+
+    /* =========================
+       Identity
+       ========================= */
+    function getPlayerFromUrlOrStorage() {
+      try {
+        const url = new URL(location.href);
+        const q = url.searchParams.get("player");
+        if (q) {
+          localStorage.setItem("hr_player", q);
+          return q;
+        }
+      } catch {}
+      return localStorage.getItem("hr_player") || null;
+    }
+    const currentPlayer = getPlayerFromUrlOrStorage();
+
+    /* =========================
+       Demo state
+       ========================= */
+    let demoState = {
+      winner: null,
+      race: PLAYERS.reduce((acc, p) => {
+        acc[p.name] = { position: 0 };
+        return acc;
+      }, {})
+    };
+
+    /* =========================
+       Helpers
+       ========================= */
+    function zeroRaceData() {
+      return PLAYERS.reduce((acc, p) => {
+        acc[p.name] = { position: 0 };
+        return acc;
+      }, {});
+    }
+
+    function showToast(text, timeout = 2500) {
+      if (!toastEl) return;
+      toastEl.textContent = text;
+      toastEl.classList.remove("hidden");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastEl.classList.add("hidden"), timeout);
+    }
+
+    function showBanner(text) {
+      if (!bannerEl) return;
+      bannerEl.textContent = text;
+      bannerEl.classList.remove("hidden");
+      runConfettiOnce();
+    }
+
+    function hideBanner() {
+      bannerEl && bannerEl.classList.add("hidden");
+    }
+
+    function renderRaceBoard(raceData = {}) {
+      raceBoardEl.innerHTML = "";
+      PLAYERS.forEach(p => {
+        const pos = (raceData[p.name] && typeof raceData[p.name].position === "number")
+          ? raceData[p.name].position : 0;
+
+        const lane = document.createElement("div");
+        lane.className = "lane";
+        lane.dataset.player = p.name;
+
+        const label = document.createElement("div");
+        label.className = "laneLabel";
+        label.innerHTML = `<span class="horseEmoji">${p.emoji}</span><div>${p.name}</div>`;
+
+        const track = document.createElement("div");
+        track.className = "track";
+
+        const finish = document.createElement("div");
+        finish.className = "finishFlag";
+        finish.textContent = "🏁";
+
+        const horse = document.createElement("div");
+        horse.className = "horse";
+        horse.textContent = p.emoji;
+
+        const pct = Math.min(100, (pos / FINISH_DISTANCE) * 100);
+        horse.style.transform = `translateX(${pct}%) translateY(-50%)`;
+
+        const meta = document.createElement("div");
+        meta.className = "laneMeta";
+        meta.textContent = `${pos}/${FINISH_DISTANCE}`;
+
+        track.appendChild(horse);
+        track.appendChild(finish);
+        lane.appendChild(label);
+        lane.appendChild(track);
+        lane.appendChild(meta);
+
+        raceBoardEl.appendChild(lane);
+      });
+    }
+
+    function renderChallenges(winnerName = null) {
+      if (!challengesEl) return;
+      challengesEl.innerHTML = "";
+
+      if (!currentPlayer) {
+        challengesWrap && challengesWrap.classList.add("hidden");
+        challengesWrap && challengesWrap.setAttribute("aria-hidden", "true");
+        return;
+      }
+
+      const disabled = !!winnerName;
+
+      challenges.forEach(ch => {
+        const row = document.createElement("div");
+        row.className = "challenge";
+
+        const emoji = document.createElement("div");
+        emoji.className = "challengeEmoji";
+        emoji.textContent = ch.emoji;
+
+        const label = document.createElement("div");
+        label.className = "challengeLabel";
+        label.textContent = ch.label;
+
+        const btn = document.createElement("button");
+        btn.className = "challengeBtn";
+        btn.textContent = `Complete (+${ch.delta})`;
+        btn.disabled = disabled;
+        btn.onclick = () => handleComplete(ch, btn);
+
+        row.appendChild(emoji);
+        row.appendChild(label);
+        row.appendChild(btn);
+        challengesEl.appendChild(row);
+      });
+
+      if (disabled) {
+        challengesWrap.classList.add("hidden");
+        challengesWrap.setAttribute("aria-hidden", "true");
+      } else {
+        challengesWrap.classList.remove("hidden");
+        challengesWrap.setAttribute("aria-hidden", "false");
+      }
+    }
+
+    async function notifyTelegram(text) {
+      try { await sendTelegramMessage(text); }
+      catch (err) { console.warn("notifyTelegram error:", err); }
+    }
+
+    async function attemptSetWinner(candidateName) {
+      if (demoMode) {
+        if (!demoState.winner) {
+          demoState.winner = candidateName;
+          return true;
+        }
+        return false;
+      }
+      // db-dependent path gets injected later
+      try {
+        const { ref, runTransaction } = firebaseDB;
+        const winnerRef = ref(db, "winner");
+        const txnResult = await runTransaction(winnerRef, (cur) => cur || candidateName);
+        const finalVal = txnResult.snapshot.val();
+        return finalVal === candidateName;
+      } catch (err) {
+        console.warn("attemptSetWinner transaction failed", err);
+        return false;
+      }
+    }
+
+    async function handleComplete(challenge, btn) {
+      if (!currentPlayer) {
+        showToast("No player identity. Open URL with ?player=YourName");
+        return;
+      }
+      if (btn) {
+        btn.disabled = true;
+        setTimeout(() => (btn.disabled = false), COMPLETE_DISABLE_MS);
+      }
+
+      if (demoMode) {
+        const before = demoState.race[currentPlayer]?.position || 0;
+        const after = before + Number(challenge.delta || 1);
+        demoState.race[currentPlayer] = { position: after };
+        renderRaceBoard(demoState.race);
+        notifyTelegram(`🐎 ${currentPlayer} • ${challenge.id} (+${challenge.delta}) → pos ${after}/${FINISH_DISTANCE}`);
+        if (after >= FINISH_DISTANCE) {
+          const iSet = await attemptSetWinner(currentPlayer);
+          if (iSet) notifyTelegram(`🏁 WINNER: ${currentPlayer} at ${after}/${FINISH_DISTANCE}`);
+          showBanner(`🏁 ${currentPlayer} wins!`);
+          renderChallenges(demoState.winner);
+        }
+        return;
+      }
+
+      // Real DB mode
+      try {
+        const { ref, runTransaction } = firebaseDB;
+        const playerPosRef = ref(db, `race/${currentPlayer}/position`);
+        const res = await runTransaction(playerPosRef, (current) => {
+          const a = Number(current ?? 0);
+          const b = Number(challenge.delta ?? 1);
+          return a + b;
+        });
+
+        if (!res.committed) { showToast("Try again"); return; }
+
+        const posAfter = Number(res.snapshot.val());
+        notifyTelegram(`🐎 ${currentPlayer} • ${challenge.id} (+${challenge.delta}) → pos ${posAfter}/${FINISH_DISTANCE}`);
+
+        if (posAfter >= FINISH_DISTANCE) {
+          const iSet = await attemptSetWinner(currentPlayer);
+          if (iSet) notifyTelegram(`🏁 WINNER: ${currentPlayer} at ${posAfter}/${FINISH_DISTANCE}`);
+          // banner will update via winner listener
+        }
+      } catch (err) {
+        console.error("handleComplete error", err);
+        showToast("Try again");
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    /* =========================
+       Page mode + init
+       ========================= */
+    function initPageMode() {
+      if (currentPlayer) {
+        playerInfoEl && (playerInfoEl.textContent = `${currentPlayer} — ${getEmojiForPlayer(currentPlayer) || ""}`);
+        challengesWrap && challengesWrap.classList.remove("hidden");
+      } else {
+        playerInfoEl && (playerInfoEl.textContent = "Spectator view");
+        challengesWrap && challengesWrap.classList.add("hidden");
+      }
+    }
+    function getEmojiForPlayer(name) {
+      const p = PLAYERS.find(x => x.name === name);
+      return p ? p.emoji : "";
+    }
+
+    /* =========================
+       Confetti (one-time)
+       ========================= */
+    function runConfettiOnce() {
+      if (runConfettiOnce._done) return;
+      runConfettiOnce._done = true;
+
+      const root = document.createElement("div");
+      root.style.position = "fixed";
+      root.style.left = 0;
+      root.style.top = 0;
+      root.style.right = 0;
+      root.style.bottom = 0;
+      root.style.pointerEvents = "none";
+      root.style.zIndex = 9999;
+
+      for (let i = 0; i < 32; i++) {
+        const el = document.createElement("div");
+        el.style.position = "absolute";
+        el.style.left = Math.random() * 100 + "%";
+        el.style.top = "-8%";
+        el.style.width = `${8 + Math.random() * 10}px`;
+        el.style.height = `${10 + Math.random() * 16}px`;
+        el.style.opacity = "0.95";
+        el.style.transform = `rotate(${Math.random() * 360}deg)`;
+        el.style.background = `hsl(${Math.round(Math.random()*60 + 20)}, 80%, 60%)`;
+        el.style.borderRadius = "2px";
+        el.style.transition = `transform 1200ms ease-out, top 1200ms ease-in, opacity 1200ms`;
+        root.appendChild(el);
+
+        requestAnimationFrame(() => {
+          el.style.top = (60 + Math.random() * 40) + "%";
+          el.style.transform = `translateY(0) rotate(${Math.random() * 720}deg)`;
+          el.style.opacity = "0";
+        });
+      }
+
+      document.body.appendChild(root);
+      setTimeout(() => root.remove(), 1400);
+    }
+
+    /* =========================
+       Firebase init with safe fallback
+       ========================= */
+    let db = null;
+    let demoMode = false;
+    let unsubRace = null;
+    let unsubWinner = null;
+    let firebaseDB = null; // holds ref/onValue/runTransaction/etc after load
+
+    function fallbackToDemo(reason = "Offline demo mode") {
+      if (unsubRace) { try { unsubRace(); } catch {} }
+      if (unsubWinner) { try { unsubWinner(); } catch {} }
+      demoMode = true;
+      console.warn("Falling back to demo:", reason);
+      showToast(reason);
+      hideBanner();
+      renderRaceBoard(demoState.race);
+      renderChallenges(null);
+    }
+
+    // Render something immediately so you never see just "Loading…"
+    initPageMode();
+    renderRaceBoard(zeroRaceData());
+    renderChallenges(null);
+    if (!currentPlayer) document.body.classList.add("spectator");
+
+    let bootTimer = null;
+
+    try {
+      // Load Firebase libs from whichever CDN/version works
+      const { appMod, dbMod, ver } = await loadFirebaseModules();
+      firebaseDB = dbMod;
+
+      // Acquire DB from user's firebaseConfig.js (supports two styles)
+      db = await getDbFromUserConfig(appMod, dbMod);
+      if (!db) throw new Error("No Firebase config or init function provided");
+
+      // Watchdog in case rules/paths block initial read
+      bootTimer = setTimeout(() => {
+        fallbackToDemo("No realtime data — demo mode");
+      }, BOOT_FALLBACK_MS);
+
+      const { ref, onValue } = dbMod;
+
+      // Race subscription
+      unsubRace = onValue(ref(db, "race"), (snapshot) => {
+        clearTimeout(bootTimer);
+        const data = snapshot.val() || {};
+        for (const k of Object.keys(data)) {
+          if (data[k] && typeof data[k].position === "string") {
+            data[k].position = Number(data[k].position);
+          }
+        }
+        renderRaceBoard(data);
+      }, (err) => {
+        console.error("race onValue error", err);
+        fallbackToDemo("Realtime error — demo mode");
+      });
+
+      // Winner subscription
+      unsubWinner = onValue(ref(db, "winner"), (snap) => {
+        const w = snap.exists() ? snap.val() : null;
+        if (w) {
+          showBanner(`🏁 ${w} wins!`);
+          renderChallenges(w);
+        } else {
+          hideBanner();
+          renderChallenges(null);
+        }
+      }, (err) => {
+        console.error("winner onValue error", err);
+        // Not fatal—just hide banner and keep going
+        hideBanner();
+      });
+
+      console.log("Firebase loaded via CDN (version fallback) and initialized.");
+    } catch (e) {
+      console.warn("Firebase unavailable or misconfigured:", e);
+      fallbackToDemo("Firebase unavailable — demo mode");
+    }
+  </script>
+
+  <noscript>
+    This app requires JavaScript. Please enable JavaScript to use the Horse Race app.
+  </noscript>
 </body>
 </html>

@@ -1,0 +1,177 @@
+:root{
+  --bg:#071227;
+  --panel:#0b1220;
+  --text:#e6eef8;
+  --muted:#98a2b3;
+  --accent:#ffb454;
+  --card:#071827;
+
+  /* layout/touch */
+  --radius:10px;
+  --tap:44px; /* min touch size */
+}
+
+*{box-sizing:border-box}
+html,body{
+  height:100%;
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  background:linear-gradient(180deg,#041223 0%, #071827 100%);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  -webkit-text-size-adjust:100%;
+  color-scheme:dark;
+  /* Mobile viewport fix: prefer dvh/svh with fallbacks */
+  min-height:100vh;
+  min-height:100svh;
+  min-height:100dvh;
+}
+
+/* Smooth scrolling on iOS, no rubber-band artifacts inside panels */
+#challenges{ -webkit-overflow-scrolling: touch; }
+
+#topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  background:rgba(255,255,255,0.02);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  /* Notch/safe-area padding */
+  padding-top:calc(12px + env(safe-area-inset-top,0px));
+  padding-left:calc(16px + env(safe-area-inset-left,0px));
+  padding-right:calc(16px + env(safe-area-inset-right,0px));
+}
+#playerInfo{font-weight:700}
+#finishConfig{font-size:13px;color:var(--muted)}
+
+main#app{
+  padding:12px;
+  max-width:980px;
+  margin:12px auto;
+  display:flex;
+  gap:12px;
+  flex-direction:column;
+}
+
+/* Banner */
+#banner{
+  position:fixed;left:0;right:0;top:0;
+  padding:12px 8px;
+  padding-left:calc(8px + env(safe-area-inset-left,0px));
+  padding-right:calc(8px + env(safe-area-inset-right,0px));
+  /* keep clear of dynamic island/notch */
+  transform:translateZ(0);
+  text-align:center;font-weight:800;font-size:18px;
+  background:linear-gradient(90deg,#ffd166,#ff8a00);
+  color:#071227;z-index:1000;
+  box-shadow:0 6px 30px rgba(0,0,0,0.45)
+}
+.hidden{display:none}
+
+/* Race board */
+#raceBoard{display:flex;flex-direction:column;gap:12px}
+.lane{
+  display:flex;align-items:center;padding:8px;
+  background:rgba(255,255,255,0.02);
+  border-radius:var(--radius);
+  position:relative;overflow:hidden
+}
+.laneLabel{width:150px;display:flex;align-items:center;gap:8px;padding-left:8px;font-weight:700}
+.horseEmoji{font-size:26px}
+.track{
+  flex:1;height:56px;position:relative;
+  background:linear-gradient(90deg,rgba(255,255,255,0.01),rgba(255,255,255,0.02));
+  border-radius:var(--radius);margin:0 12px;display:flex;align-items:center
+}
+.finishFlag{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:20px}
+.horse{
+  position:absolute;left:8px;top:50%;
+  transform:translateY(-50%);
+  transition:transform 600ms cubic-bezier(.2,.8,.2,1);
+  font-size:30px;will-change:transform
+}
+.laneMeta{width:92px;text-align:right;padding-right:8px;font-size:14px;color:var(--muted)}
+
+/* Challenges */
+#challengesWrap{
+  background:rgba(255,255,255,0.02);
+  padding:8px;border-radius:var(--radius)
+}
+#challenges{
+  display:flex;flex-direction:column;gap:8px;
+  max-height:52vh;overflow:auto;padding:6px
+}
+.challenge{
+  display:flex;align-items:center;gap:12px;
+  padding:10px;border-radius:8px;
+  background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.015))
+}
+.challengeEmoji{font-size:26px;width:36px;text-align:center}
+.challengeLabel{flex:1;font-weight:600;font-size:15px}
+.challengeBtn{
+  background:var(--accent);color:#1a1305;
+  border:none;padding:10px 14px;border-radius:8px;
+  font-weight:800;cursor:pointer;
+  min-height:var(--tap);min-width:var(--tap);
+  -webkit-tap-highlight-color:transparent;
+  transition:transform 120ms ease, filter 120ms ease, opacity 120ms ease;
+}
+.challengeBtn:hover{filter:brightness(1.05)}
+.challengeBtn:active{transform:translateY(1px)}
+.challengeBtn:disabled{opacity:0.6;cursor:default}
+
+/* Toast */
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  background:var(--panel);padding:10px 14px;border-radius:8px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.5);z-index:1200;color:var(--text)
+}
+
+/* Screen reader only */
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0
+}
+
+/* Focus states (keyboard & accessibility) */
+:focus-visible{
+  outline:2px solid color-mix(in oklab, var(--accent) 70%, white);
+  outline-offset:2px;
+  border-radius:6px;
+}
+
+/* Motion preferences */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* Compact heights (landscape phones) */
+@media (max-height:520px){
+  .track{height:46px}
+  .horse{font-size:26px}
+  .horseEmoji{font-size:22px}
+  .laneLabel{width:130px}
+  .laneMeta{width:80px;font-size:13px}
+}
+
+/* Responsive layout split */
+@media (min-width:900px){
+  main#app{flex-direction:row;align-items:flex-start}
+  #raceBoard{flex:1}
+  #challengesWrap{width:360px;flex:0}
+}
+
+/* Optional: subtle scrollbars (supported browsers only) */
+@supports selector(::-webkit-scrollbar){
+  #challenges::-webkit-scrollbar{width:10px}
+  #challenges::-webkit-scrollbar-track{background:rgba(255,255,255,0.04);border-radius:8px}
+  #challenges::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.14);border-radius:8px}
+}
