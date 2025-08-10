@@ -12,7 +12,6 @@ export const challenges = [
   { id: "firstTimeBuyer", emoji: "🌟", label: "Convert repair into sale", delta: 1 },
   { id: "buyGold", emoji: "🧾", label: "Mention buying gold", delta: 1 },
   { id: "upsellPremium", emoji: "💎", label: "Upgrade to premium product", delta: 1 },
-  { id: "promoApplied", emoji: "🏷️", label: "Apply a promotion/sale", delta: 1 },
   { id: "thankYouNote", emoji: "💌", label: "Add a personalized thank-you", delta: 1 },
   { id: "showJewelry", emoji: "🏷️", label: "Show jewelry while waiting for repair", delta: 1 }
 ];
