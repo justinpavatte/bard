@@ -182,6 +182,14 @@
       ro: null,
     };
 
+    // Keep the current player's lane at the bottom of the list (visual only)
+    function putCurrentPlayerAtBottom() {
+    if (!currentPlayer) return;
+    const lanes = Array.from(raceBoardEl.children);
+    const mine = lanes.find(el => el.dataset && el.dataset.player === currentPlayer);
+    if (mine) raceBoardEl.appendChild(mine); // appending reorders to end
+    }
+
     // NEW: two-row layout per lane
     function buildRaceBoard() {
       raceBoardEl.innerHTML = "";
@@ -237,6 +245,9 @@
       });
 
       UI.built = true;
+      
+      // Move current player's lane to the bottom once, after initial render
+      putCurrentPlayerAtBottom();
 
       // First positioning after everything is in the DOM
       requestAnimationFrame(positionAllHorses);
