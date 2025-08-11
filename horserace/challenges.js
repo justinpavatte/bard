@@ -9,7 +9,7 @@ export const challenges = [
   { id: "giftCardSale", emoji: "💳", label: "Sell a gift certificate", delta: 1 },
   { id: "demoShown", emoji: "🎬", label: "Model product for customer", delta: 1 },
   { id: "crossSell", emoji: "➕", label: "Cross-sell another category", delta: 1 },
-  { id: "firstTimeBuyer", emoji: "🌟", label: "Convert repair into sale", delta: 1 },
+  { id: "convertRepairToSale", emoji: "🌟", label: "Convert repair into sale", delta: 1 },
   { id: "buyGold", emoji: "🧾", label: "Mention buying gold", delta: 1 },
   { id: "upsellPremium", emoji: "💎", label: "Upgrade to premium product", delta: 1 },
   { id: "thankYouNote", emoji: "💌", label: "Add a personalized thank-you", delta: 1 },
